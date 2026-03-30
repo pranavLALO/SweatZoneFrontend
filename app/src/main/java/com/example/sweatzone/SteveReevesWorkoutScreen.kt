@@ -90,6 +90,7 @@ fun SteveReevesWorkoutScreen(navController: NavController) {
                 WorkoutPhilosophySectionSteve(accentColor, primaryTextColor)
                 TrainingPrinciplesSection(primaryTextColor, secondaryTextColor, accentColor)
                 WeeklyTrainingScheduleSection(primaryTextColor, accentColor)
+
                 Spacer(modifier = Modifier.height(24.dp))
             }
         }

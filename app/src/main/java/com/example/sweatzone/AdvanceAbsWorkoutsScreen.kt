@@ -23,11 +23,17 @@ import com.example.sweatzone.ui.theme.SweatzoneTheme
 
 @Composable
 fun AdvanceAbsWorkoutsScreen(navController: NavController) {
+    val userViewModel: UserViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
     val pinkBg = Color(0xFFFFF0F5)
+    val startTime = androidx.compose.runtime.remember { System.currentTimeMillis() }
 
     Scaffold(
         bottomBar = {
-            AppBottomNavigationBar(navController = navController, homeRoute = Screen.AdvanceHome.route)
+            AppBottomNavigationBar(
+                navController = navController,
+                homeRoute = Screen.AdvanceHome.route,
+                workoutsRoute = Screen.AdvanceWorkouts.route
+            )
         }
     ) { innerPadding ->
         LazyColumn(
@@ -76,6 +82,23 @@ fun AdvanceAbsWorkoutsScreen(navController: NavController) {
                         "Builds incredible core strength and control."
                     )
                 )
+            }
+
+            item {
+                Button(
+                    onClick = {
+                        val duration = ((System.currentTimeMillis() - startTime) / 1000).toInt()
+                        userViewModel.logWorkout("abs", "high", duration) {
+                            navController.popBackStack()
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE0FF63))
+                ) {
+                    Text(text = "Finish Workout", color = Color.Black)
+                }
             }
         }
     }

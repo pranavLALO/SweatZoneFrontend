@@ -35,12 +35,14 @@ import com.example.sweatzone.ui.theme.SweatzoneTheme
 
 @Composable
 fun UpperBodyHomeWorkoutScreen(navController: NavController) {
+    val userViewModel: UserViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
     // Elegant pale pink background to match the theme
     val pinkBg = Color(0xFFFFF0F5)
+    val startTime = androidx.compose.runtime.remember { System.currentTimeMillis() }
 
     Scaffold(
         bottomBar = {
-            AppBottomNavigationBar(navController = navController, homeRoute = Screen.BeginnerHome.route)
+            AppBottomNavigationBar(navController = navController)
         }
     ) { innerPadding ->
         LazyColumn(
@@ -161,6 +163,23 @@ fun UpperBodyHomeWorkoutScreen(navController: NavController) {
                         "Allows for progressive overload without increasing volume excessively."
                     )
                 )
+            }
+
+            item {
+                Button(
+                    onClick = {
+                        val duration = ((System.currentTimeMillis() - startTime) / 1000).toInt()
+                        userViewModel.logWorkout("upper_body", "medium", duration) {
+                            navController.popBackStack()
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE0FF63))
+                ) {
+                    Text(text = "Finish Workout", color = Color.Black)
+                }
             }
 
             item { Spacer(modifier = Modifier.height(24.dp)) }

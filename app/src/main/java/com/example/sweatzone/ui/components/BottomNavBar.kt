@@ -19,16 +19,30 @@ import com.example.sweatzone.Screen
 data class BottomNavItem(val title: String, val icon: ImageVector, val route: String)
 
 @Composable
-fun AppBottomNavigationBar(navController: NavController, homeRoute: String = Screen.BeginnerHome.route) {
+fun AppBottomNavigationBar(
+    navController: NavController,
+    homeRoute: String? = null,
+    workoutsRoute: String? = null
+) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
+    
+    // Resolve routes based on persisted level if not provided
+    val level = com.example.sweatzone.data.local.TokenManager.getUserLevel()
+    val finalHomeRoute = homeRoute ?: when (level) {
+        "intermediate" -> Screen.IntermediateHome.route
+        "advanced" -> Screen.AdvanceHome.route
+        else -> Screen.BeginnerHome.route
+    }
+    val finalWorkoutsRoute = workoutsRoute ?: when (level) {
+        "intermediate" -> Screen.IntermediateWorkouts.route
+        "advanced" -> Screen.AdvanceWorkouts.route
+        else -> Screen.BeginnerWorkouts.route
+    }
 
-    // Instantiate items directly, allowing the homeRoute to be dynamic
-    // Instantiate items directly, allowing the homeRoute to be dynamic
     val items = listOf(
-        BottomNavItem("Home", Icons.Default.Home, homeRoute),
-        BottomNavItem("Workouts", Icons.Default.FitnessCenter, Screen.BeginnerWorkouts.route),
-        // 👇 UPDATE THIS LINE
+        BottomNavItem("Home", Icons.Default.Home, finalHomeRoute),
+        BottomNavItem("Workouts", Icons.Default.FitnessCenter, finalWorkoutsRoute),
         BottomNavItem(" Tools", Icons.Default.SmartToy, "tools"),
         BottomNavItem("Profile", Icons.Default.Person, Screen.Profile.route)
     )

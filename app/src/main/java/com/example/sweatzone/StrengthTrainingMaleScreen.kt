@@ -51,7 +51,7 @@ fun StrengthTrainingMaleScreen(navController: NavController) {
                         contentAlignment = Alignment.BottomStart
                     ) {
                         Text(
-                            text = "Strength Training: Full Body",
+                            text = "Goal",
                             color = Color.White,
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Bold,

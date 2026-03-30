@@ -23,7 +23,9 @@ import com.example.sweatzone.ui.theme.SweatzoneTheme
 
 @Composable
 fun BeginnerAbsWorkoutsScreen(navController: NavController) {
+    val userViewModel: UserViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
     val pinkBg = Color(0xFFFFF0F5)
+    val startTime = androidx.compose.runtime.remember { System.currentTimeMillis() }
 
     Scaffold(
         bottomBar = {
@@ -110,6 +112,23 @@ fun BeginnerAbsWorkoutsScreen(navController: NavController) {
                         "Improves posture and body stability."
                     )
                 )
+            }
+
+            item {
+                Button(
+                    onClick = {
+                        val duration = ((System.currentTimeMillis() - startTime) / 1000).toInt()
+                        userViewModel.logWorkout("abs", "medium", duration) {
+                            navController.popBackStack()
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE0FF63))
+                ) {
+                    Text(text = "Finish Workout", color = Color.Black)
+                }
             }
         }
     }

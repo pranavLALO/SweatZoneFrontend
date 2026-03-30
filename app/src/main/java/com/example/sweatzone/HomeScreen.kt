@@ -28,7 +28,7 @@ fun HomeScreen(modifier: Modifier = Modifier, navController: NavController) {
     Scaffold(
         bottomBar = {
             // Assuming the homeRoute for this generic menu is the Beginner Home dashboard
-            AppBottomNavigationBar(navController = navController, homeRoute = Screen.BeginnerHome.route)
+            AppBottomNavigationBar(navController = navController)
         }
     ) { innerPadding ->
         Column(
@@ -48,7 +48,10 @@ fun HomeScreen(modifier: Modifier = Modifier, navController: NavController) {
             ) {
                 // --- BEGINNER CARD ---
                 item {
-                    Box(modifier = Modifier.clickable { navController.navigate(Screen.BeginnerHome.route) }) {
+                    Box(modifier = Modifier.clickable { 
+                        com.example.sweatzone.data.local.TokenManager.saveUserLevel("beginner")
+                        navController.navigate(Screen.BeginnerHome.route) 
+                    }) {
                         HomeCard(
                             title = "Beginner",
                             containerColor = darkPurple,
@@ -59,7 +62,10 @@ fun HomeScreen(modifier: Modifier = Modifier, navController: NavController) {
 
                 // --- INTERMEDIATE CARD ---
                 item {
-                    Box(modifier = Modifier.clickable { navController.navigate(Screen.IntermediateHome.route) }) {
+                    Box(modifier = Modifier.clickable { 
+                        com.example.sweatzone.data.local.TokenManager.saveUserLevel("intermediate")
+                        navController.navigate(Screen.IntermediateHome.route) 
+                    }) {
                         HomeCard(
                             title = "Intermediate",
                             containerColor = darkPurple,
@@ -70,7 +76,10 @@ fun HomeScreen(modifier: Modifier = Modifier, navController: NavController) {
 
                 // --- ADVANCE CARD ---
                 item {
-                    Box(modifier = Modifier.clickable { navController.navigate(Screen.AdvanceHome.route) }) {
+                    Box(modifier = Modifier.clickable { 
+                        com.example.sweatzone.data.local.TokenManager.saveUserLevel("advanced")
+                        navController.navigate(Screen.AdvanceHome.route) 
+                    }) {
                         HomeCard(
                             title = "Advanced",
                             containerColor = darkPurple,

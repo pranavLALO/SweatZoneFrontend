@@ -32,6 +32,7 @@ class AuthViewModel : ViewModel() {
             _authState.value = AuthState.Loading
             repository.register(name, email, password)
                 .onSuccess {
+                    // Token and User ID are already saved in Repository
                     _authState.value = AuthState.Success(it.message)
                 }
                 .onFailure {

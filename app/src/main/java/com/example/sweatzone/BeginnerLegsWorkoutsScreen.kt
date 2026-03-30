@@ -32,6 +32,8 @@ import com.example.sweatzone.ui.components.AppBottomNavigationBar
 
 @Composable
 fun BeginnerLegsWorkoutsScreen(navController: NavController) {
+    val userViewModel: UserViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+    val startTime = androidx.compose.runtime.remember { System.currentTimeMillis() }
 
     val pinkBg = Color(0xFFFFF0F5)
 
@@ -181,6 +183,23 @@ fun BeginnerLegsWorkoutsScreen(navController: NavController) {
                         "Enhances running and jumping performance."
                     )
                 )
+            }
+
+            item {
+                Button(
+                    onClick = {
+                        val duration = ((System.currentTimeMillis() - startTime) / 1000).toInt()
+                        userViewModel.logWorkout("legs", "medium", duration) {
+                            navController.popBackStack()
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE0FF63))
+                ) {
+                    Text(text = "Finish Workout", color = Color.Black)
+                }
             }
 
             item { Spacer(modifier = Modifier.height(24.dp)) }

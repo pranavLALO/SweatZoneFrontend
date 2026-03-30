@@ -37,7 +37,8 @@ fun AdvanceHomeScreen(navController: NavController) {
         bottomBar = {
             AppBottomNavigationBar(
                 navController = navController,
-                homeRoute = Screen.AdvanceHome.route
+                homeRoute = Screen.AdvanceHome.route,
+                workoutsRoute = Screen.AdvanceWorkouts.route
             )
         }
     ) { innerPadding ->
@@ -66,12 +67,25 @@ fun AdvanceHomeScreen(navController: NavController) {
                 AdvStatCard(
                     modifier = Modifier.weight(1f),
                     title = "Goal",
-                    mainValue = "90%",
+                    mainValue = "Hit The Workout",
                     subValue = "Yearly Progress",
                     icon = Icons.Default.Flag,
                     backgroundColor = Color(0xFFF3E5F5),
                     contentColor = Color(0xFF7B1FA2),
-                    onClick = { navController.navigate(Screen.GoalSelection.route) }
+                    onClick = { 
+                        val goal = com.example.sweatzone.data.local.TokenManager.getUserGoal()
+                        val gender = com.example.sweatzone.data.local.TokenManager.getUserGender()
+                        
+                        if (goal?.contains("Strength Training", ignoreCase = true) == true) {
+                            if (gender == "Male") {
+                                navController.navigate(Screen.StrengthTrainingMale.route)
+                            } else {
+                                navController.navigate(Screen.StrengthTrainingFemale.route)
+                            }
+                        } else {
+                            navController.navigate(Screen.GoalSelection.route)
+                        }
+                    }
                 )
                 AdvStatCard(
                     modifier = Modifier.weight(1f),
@@ -110,7 +124,7 @@ private fun AdvHomeGreeting() {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column {
-            Text(text = "Hi, Alex!", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+            Text(text = "Hi", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color.Black)
             Text(text = "You're on fire!", fontSize = 14.sp, color = Color.Gray)
         }
         Box(
@@ -157,6 +171,7 @@ private fun AdvStatCard(modifier: Modifier, title: String, mainValue: String, su
                 Text(text = mainValue, fontSize = 28.sp, fontWeight = FontWeight.Bold, color = contentColor)
                 Text(text = subValue, fontSize = 12.sp, color = contentColor.copy(alpha = 0.7f))
             }
+
         }
     }
 }

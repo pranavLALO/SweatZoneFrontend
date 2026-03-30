@@ -74,7 +74,20 @@ fun BeginnerHomeScreen(navController: NavController) {
                     icon = Icons.Default.Flag,
                     backgroundColor = Color(0xFFE0F2F1), // Light Teal
                     contentColor = Color(0xFF00695C),
-                    onClick = { navController.navigate(Screen.GoalSelection.route) }
+                    onClick = { 
+                        val goal = com.example.sweatzone.data.local.TokenManager.getUserGoal()
+                        val gender = com.example.sweatzone.data.local.TokenManager.getUserGender()
+                        
+                        if (goal?.contains("Strength Training", ignoreCase = true) == true) {
+                            if (gender == "Male") {
+                                navController.navigate(Screen.StrengthTrainingMale.route)
+                            } else {
+                                navController.navigate(Screen.StrengthTrainingFemale.route)
+                            }
+                        } else {
+                            navController.navigate(Screen.GoalSelection.route)
+                        }
+                    }
                 )
                 BeginnerStatCard(
                     modifier = Modifier.weight(1f),
@@ -127,7 +140,7 @@ private fun BeginnerHomeGreeting() {
             modifier = Modifier.size(48.dp).clip(CircleShape).background(Color(0xFFF5F5F5)),
             contentAlignment = Alignment.Center
         ) {
-            Icon(imageVector = Icons.Default.Person, contentDescription = "Profile", tint = Color.Black)
+
         }
     }
 }

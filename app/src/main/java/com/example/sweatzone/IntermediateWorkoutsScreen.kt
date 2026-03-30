@@ -40,7 +40,11 @@ fun IntermediateWorkoutsScreen(navController: NavController) {
 
     Scaffold(
         bottomBar = {
-            AppBottomNavigationBar(navController = navController, homeRoute = Screen.IntermediateHome.route)
+            AppBottomNavigationBar(
+                navController = navController,
+                homeRoute = Screen.IntermediateHome.route,
+                workoutsRoute = Screen.IntermediateWorkouts.route
+            )
         }
     ) { innerPadding ->
         Column(

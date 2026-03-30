@@ -14,7 +14,12 @@ class AuthRepository {
             )
 
             if (response.isSuccessful && response.body()?.status == true) {
-                Result.success(response.body()!!)
+                val body = response.body()!!
+                // Save Token and User ID
+                body.token?.let { com.example.sweatzone.data.local.TokenManager.saveToken(it) }
+                body.user?.let { com.example.sweatzone.data.local.TokenManager.saveUserId(it.id) }
+                
+                Result.success(body)
             } else {
                 Result.failure(
                     Exception(response.body()?.message ?: "Login failed")
@@ -37,7 +42,12 @@ class AuthRepository {
             )
 
             if (response.isSuccessful && response.body()?.status == true) {
-                Result.success(response.body()!!)
+                val body = response.body()!!
+                // Save Token and User ID (if returned on register)
+                body.token?.let { com.example.sweatzone.data.local.TokenManager.saveToken(it) }
+                body.user?.let { com.example.sweatzone.data.local.TokenManager.saveUserId(it.id) }
+                
+                Result.success(body)
             } else {
                 Result.failure(
                     Exception(response.body()?.message ?: "Registration failed")

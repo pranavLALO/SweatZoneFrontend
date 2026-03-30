@@ -55,8 +55,7 @@ fun ToolsScreen(
         topBar = { ToolsTopBar(navController) },
         bottomBar = {
             AppBottomNavigationBar(
-                navController = navController,
-                homeRoute = "tools"
+                navController = navController
             )
         }
     ) { innerPadding ->
@@ -109,7 +108,7 @@ fun ToolsScreen(
                 onClick = {
                     dietViewModel.generateDietPlan(
                         userId = userViewModel.userId,
-                        goal = "muscle_gain" // later replace with saved goal
+                        goal = "" // Let backend use saved profile goal
                     )
                 }
             )

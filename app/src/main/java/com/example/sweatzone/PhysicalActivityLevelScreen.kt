@@ -14,6 +14,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import android.widget.Toast
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -26,8 +28,10 @@ import com.example.sweatzone.ui.theme.SweatzoneTheme
 @Composable
 fun PhysicalActivityLevelScreen(
     modifier: Modifier = Modifier,
-    navController: NavController
+    navController: NavController,
+    userViewModel: UserViewModel
 ) {
+    val context = LocalContext.current
     var selectedLevel by remember { mutableStateOf("Beginner") }
 
     Surface(
@@ -127,18 +131,26 @@ fun PhysicalActivityLevelScreen(
             // 4. Continue Button is now always visible at the bottom
             Button(
                 onClick = {
-                    // Navigate to the appropriate Home Screen based on level
-                    when (selectedLevel) {
-                        "Beginner" -> navController.navigate(Screen.BeginnerHome.route) {
-                            popUpTo(Screen.Onboarding.route) { inclusive = true }
+                    val level = selectedLevel 
+                    userViewModel.saveBodyProfile(
+                        activityLevel = level,
+                        onSuccess = {
+                             when (level) {
+                                "Beginner" -> navController.navigate(Screen.BeginnerHome.route) {
+                                    popUpTo(Screen.Onboarding.route) { inclusive = true }
+                                }
+                                "Intermediate" -> navController.navigate(Screen.IntermediateHome.route) {
+                                    popUpTo(Screen.Onboarding.route) { inclusive = true }
+                                }
+                                "Advanced" -> navController.navigate(Screen.AdvanceHome.route) {
+                                    popUpTo(Screen.Onboarding.route) { inclusive = true }
+                                }
+                            }
+                        },
+                        onError = { errorMsg ->
+                             Toast.makeText(context, "Error: $errorMsg", Toast.LENGTH_SHORT).show()
                         }
-                        "Intermediate" -> navController.navigate(Screen.IntermediateHome.route) {
-                            popUpTo(Screen.Onboarding.route) { inclusive = true }
-                        }
-                        "Advanced" -> navController.navigate(Screen.AdvanceHome.route) {
-                            popUpTo(Screen.Onboarding.route) { inclusive = true }
-                        }
-                    }
+                    )
                 },
                 shape = RoundedCornerShape(30.dp),
                 colors = ButtonDefaults.buttonColors(
@@ -201,6 +213,6 @@ fun LevelOptionCard(
 @Composable
 fun PhysicalActivityLevelScreenPreview() {
     SweatzoneTheme {
-        PhysicalActivityLevelScreen(navController = rememberNavController())
+        PhysicalActivityLevelScreen(navController = rememberNavController(), userViewModel = UserViewModel())
     }
 }

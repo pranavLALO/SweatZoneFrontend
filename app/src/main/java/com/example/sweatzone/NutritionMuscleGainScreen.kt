@@ -3,6 +3,7 @@ package com.example.sweatzone
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import android.widget.Toast
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -32,7 +33,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.sweatzone.data.api.RetrofitClient
+import com.example.sweatzone.data.dto.MealDto
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @Composable
 fun NutritionMuscleGainScreen(navController: NavController) {
@@ -42,6 +49,43 @@ fun NutritionMuscleGainScreen(navController: NavController) {
     val textDark = Color(0xFF111827)
     val textGray = Color(0xFF4B5563)
     val purplePrimary = Color(0xFF8B5CF6)
+
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val scope = rememberCoroutineScope()
+    var suggestedMeals by remember { mutableStateOf<List<MealDto>>(emptyList()) }
+
+    fun fetchMeals(isVeg: Boolean) {
+        val vegParam = if (isVeg) 1 else 0
+        Toast.makeText(context, "Calculating...", Toast.LENGTH_SHORT).show()
+        scope.launch(Dispatchers.IO) {
+            try {
+                val response = RetrofitClient.api.getMeals("muscle_gain", vegParam)
+                withContext(Dispatchers.Main) {
+                    if (response.isSuccessful && response.body()?.status == true) {
+                        val allMeals = response.body()?.data ?: emptyList()
+                        // Select one of each main meal type (exclude snacks for "complete meal" feel)
+                        val breakfast = allMeals.filter { it.meal_type == "breakfast" }.randomOrNull()
+                        val lunch = allMeals.filter { it.meal_type == "lunch" }.randomOrNull()
+                        val dinner = allMeals.filter { it.meal_type == "dinner" }.randomOrNull()
+                        
+                        suggestedMeals = listOfNotNull(breakfast, lunch, dinner)
+                        
+                        if (suggestedMeals.isNotEmpty()) {
+                            Toast.makeText(context, "Generated balanced meal plan!", Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(context, "No matching meals found.", Toast.LENGTH_SHORT).show()
+                        }
+                    } else {
+                         Toast.makeText(context, "Failed: ${response.message()}", Toast.LENGTH_LONG).show()
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize().background(Color.White)) {
         Column(
@@ -56,7 +100,7 @@ fun NutritionMuscleGainScreen(navController: NavController) {
                     .height(280.dp)
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.chestimg), // Replace with nutrition image
+                    painter = painterResource(id = R.drawable.chestimg), 
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize()
@@ -82,7 +126,7 @@ fun NutritionMuscleGainScreen(navController: NavController) {
                         text = "Nutrition for Muscle\nGain",
                         fontSize = 28.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color.Black, // Dark text on white fade
+                        color = Color.Black, 
                         lineHeight = 34.sp
                     )
                 }
@@ -136,42 +180,63 @@ fun NutritionMuscleGainScreen(navController: NavController) {
                 Spacer(modifier = Modifier.height(32.dp))
 
                 // --- Macro Calculator Card ---
-                MacroCalculatorCard(purplePrimary)
+                MacroCalculatorCard(purplePrimary, onCalculate = { isVeg -> fetchMeals(isVeg) })
 
                 Spacer(modifier = Modifier.height(32.dp))
 
                 // --- Sample Meal Ideas ---
-                Text(
-                    text = "Sample Meal Ideas",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = textDark
-                )
-                Spacer(modifier = Modifier.height(16.dp))
+                if (suggestedMeals.isNotEmpty()) {
+                    Text(
+                        text = "Suggested Meals for You",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = textDark
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                MealItemCard(
-                    title = "Breakfast",
-                    desc = "Oatmeal with protein powder and berries",
-                    icon = Icons.Default.BreakfastDining,
-                    iconBg = Color(0xFFDBEAFE),
-                    iconTint = Color(0xFF2563EB)
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                MealItemCard(
-                    title = "Lunch",
-                    desc = "Chicken breast with brown rice and mixed vegetables",
-                    icon = Icons.Default.LunchDining,
-                    iconBg = Color(0xFFDCFCE7),
-                    iconTint = Color(0xFF16A34A)
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                MealItemCard(
-                    title = "Dinner",
-                    desc = "Salmon with sweet potatoes and asparagus",
-                    icon = Icons.Default.DinnerDining,
-                    iconBg = Color(0xFFF3E8FF),
-                    iconTint = Color(0xFF7C3AED)
-                )
+                    suggestedMeals.forEach { meal ->
+                        val (icon, color, tint) = when(meal.meal_type) {
+                            "breakfast" -> Triple(Icons.Default.BreakfastDining, Color(0xFFDBEAFE), Color(0xFF2563EB))
+                            "lunch" -> Triple(Icons.Default.LunchDining, Color(0xFFDCFCE7), Color(0xFF16A34A))
+                            "dinner" -> Triple(Icons.Default.DinnerDining, Color(0xFFF3E8FF), Color(0xFF7C3AED))
+                            else -> Triple(Icons.Default.LunchDining, Color(0xFFFEF3C7), Color(0xFFD97706))
+                        }
+
+                        MealItemCard(
+                           title = meal.meal_name,
+                           desc = "${meal.calories} kcal | P: ${meal.protein}g C: ${meal.carbs}g F: ${meal.fats}g",
+                           icon = icon,
+                           iconBg = color,
+                           iconTint = tint
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
+                } else {
+                     Text(
+                        text = "Sample Meal Ideas",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = textDark
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    // Fallback static meals
+                    MealItemCard(
+                        title = "Breakfast Example",
+                        desc = "Oatmeal with protein powder and berries",
+                        icon = Icons.Default.BreakfastDining,
+                        iconBg = Color(0xFFDBEAFE),
+                        iconTint = Color(0xFF2563EB)
+                    )
+                     Spacer(modifier = Modifier.height(12.dp))
+                    MealItemCard(
+                        title = "Lunch Example",
+                        desc = "Chicken breast with brown rice and mixed vegetables",
+                        icon = Icons.Default.LunchDining,
+                        iconBg = Color(0xFFDCFCE7),
+                        iconTint = Color(0xFF16A34A)
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(50.dp))
             }
@@ -254,8 +319,9 @@ fun NutrientSection(
 }
 
 @Composable
-fun MacroCalculatorCard(primaryColor: Color) {
+fun MacroCalculatorCard(primaryColor: Color, onCalculate: (Boolean) -> Unit) {
     var weightInput by remember { mutableStateOf("") }
+    var isVegetarian by remember { mutableStateOf(false) }
     var resultText by remember { mutableStateOf<String?>(null) }
 
     Card(
@@ -289,6 +355,20 @@ fun MacroCalculatorCard(primaryColor: Color) {
                 )
             )
 
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Vegetarian Checkbox
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Checkbox(
+                    checked = isVegetarian,
+                    onCheckedChange = { isVegetarian = it },
+                    colors = CheckboxDefaults.colors(checkedColor = primaryColor)
+                )
+                Text(text = "Vegetarian", fontSize = 14.sp, color = Color.Gray)
+            }
+
             Spacer(modifier = Modifier.height(16.dp))
 
             Button(
@@ -299,6 +379,7 @@ fun MacroCalculatorCard(primaryColor: Color) {
                         val carbs = (weight * 3.5).toInt()
                         val fats = (weight * 0.9).toInt()
                         resultText = "Protein: ${protein}g | Carbs: ${carbs}g | Fats: ${fats}g"
+                        onCalculate(isVegetarian)
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),

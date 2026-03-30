@@ -20,13 +20,19 @@ import com.example.sweatzone.ui.components.ExerciseItem
 
 @Composable
 fun AdvanceChestWorkoutsScreen(navController: NavController) {
+    val userViewModel: UserViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
 
     // Elegant pale pink background
     val pinkBg = Color(0xFFFFF0F5)
+    val startTime = androidx.compose.runtime.remember { System.currentTimeMillis() }
 
     Scaffold(
         bottomBar = {
-            AppBottomNavigationBar(navController = navController)
+            AppBottomNavigationBar(
+                navController = navController,
+                homeRoute = Screen.AdvanceHome.route,
+                workoutsRoute = Screen.AdvanceWorkouts.route
+            )
         }
     ) { innerPadding ->
         LazyColumn(
@@ -162,6 +168,23 @@ fun AdvanceChestWorkoutsScreen(navController: NavController) {
                         "Allows for a good stretch and full contraction of the pectoral muscles."
                     )
                 )
+            }
+
+            item {
+                Button(
+                    onClick = {
+                        val duration = ((System.currentTimeMillis() - startTime) / 1000).toInt()
+                        userViewModel.logWorkout("chest", "high", duration) {
+                            navController.popBackStack()
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE0FF63))
+                ) {
+                    Text(text = "Finish Workout", color = Color.Black)
+                }
             }
 
             item { Spacer(modifier = Modifier.height(24.dp)) }

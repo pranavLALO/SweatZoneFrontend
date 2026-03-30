@@ -16,11 +16,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.sweatzone.ui.components.AppBottomNavigationBar
-import com.example.sweatzone.ui.components.ExerciseItem // Import the shared, crash-free component
+import androidx.compose.ui.platform.LocalContext
+import com.example.sweatzone.ui.components.ExerciseItem
 
 @Composable
 fun BeginnerChestWorkoutsScreen(navController: NavController) {
+    val userViewModel: UserViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+    val context = LocalContext.current
     val lavenderBg = Color(0xFFF3E5F5)
+    val startTime = androidx.compose.runtime.remember { System.currentTimeMillis() }
 
     Scaffold(
         bottomBar = {
@@ -61,7 +65,7 @@ fun BeginnerChestWorkoutsScreen(navController: NavController) {
             item { 
                 ExerciseItem(
                     title = "Push Up",
-                    videoResId = R.raw.pushup_video,
+                    videoUrl = "http://192.168.118.119/SweatZone/videos/pushup_video.mp4",
                     instructions = listOf("Get on the floor on all fours.", "Straighten arms and legs.", "Lower chest to floor.", "Push back up."),
                     benefits = listOf("Strengthens chest.", "Targets core.")
                 )
@@ -70,7 +74,7 @@ fun BeginnerChestWorkoutsScreen(navController: NavController) {
             item { 
                 ExerciseItem(
                     title = "Incline Push Up",
-                    videoResId = R.raw.incline_pushup_video,
+                    videoUrl = "http://192.168.118.119/SweatZone/videos/incline_pushup_video.mp4",
                     instructions = listOf("Hands on bench.", "Lower chest to edge.", "Push back up."),
                     benefits = listOf("Easier on shoulders.", "Targets lower chest.")
                 )
@@ -79,7 +83,7 @@ fun BeginnerChestWorkoutsScreen(navController: NavController) {
             item { 
                 ExerciseItem(
                     title = "Knee Push Up",
-                    videoResId = R.raw.knee_pushup_video,
+                    videoUrl = "http://192.168.118.119/SweatZone/videos/knee_pushup_video.mp4",
                     instructions = listOf("Knees on floor.", "Lower chest.", "Push up."),
                     benefits = listOf("Good for beginners.", "Builds strength.")
                 )
@@ -88,7 +92,7 @@ fun BeginnerChestWorkoutsScreen(navController: NavController) {
             item { 
                 ExerciseItem(
                     title = "Barbell Bench Press",
-                    videoResId = R.raw.bench_press_video,
+                    videoUrl = "http://192.168.118.119/SweatZone/videos/bench_press_video.mp4",
                     instructions = listOf("Lie on bench.", "Lower bar to chest.", "Press up."),
                     benefits = listOf("Mass builder.", "Full chest activation.")
                 )
@@ -97,10 +101,34 @@ fun BeginnerChestWorkoutsScreen(navController: NavController) {
             item { 
                 ExerciseItem(
                     title = "Incline Bench Press",
-                    videoResId = R.raw.incline_bench_video,
+                    videoUrl = "http://192.168.118.119/SweatZone/videos/incline_bench_video.mp4",
                     instructions = listOf("Set bench to 30 degrees.", "Press weight up.", "Lower slowly."),
                     benefits = listOf("Upper chest focus.", "Shoulder strength.")
                 )
+            }
+
+            item {
+                Button(
+                    onClick = {
+                        val duration = ((System.currentTimeMillis() - startTime) / 1000).toInt()
+                        userViewModel.logWorkout(
+                            muscleGroup = "chest", 
+                            intensity = "medium", 
+                            durationSeconds = duration,
+                            onError = { errorMsg ->
+                                android.widget.Toast.makeText(context, "Error: $errorMsg", android.widget.Toast.LENGTH_LONG).show()
+                            }
+                        ) {
+                            navController.popBackStack()
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE0FF63))
+                ) {
+                    Text(text = "Finish Workout", color = Color.Black)
+                }
             }
 
             item { Spacer(modifier = Modifier.height(16.dp)) }

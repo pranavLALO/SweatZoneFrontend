@@ -11,20 +11,35 @@ import androidx.navigation.compose.rememberNavController
 fun NavGraph() {
     val navController: NavHostController = rememberNavController()
     val userViewModel: UserViewModel = viewModel()
+    val context = androidx.compose.ui.platform.LocalContext.current
+
+    // Auto-Login Logic
+    val token = com.example.sweatzone.data.local.TokenManager.getToken()
+    val level = com.example.sweatzone.data.local.TokenManager.getUserLevel()
+    
+    val startDest = if (!token.isNullOrEmpty()) {
+        when (level) {
+            "intermediate" -> Screen.IntermediateHome.route
+            "advanced" -> Screen.AdvanceHome.route
+            else -> Screen.BeginnerHome.route
+        }
+    } else {
+        Screen.Onboarding.route
+    }
 
     NavHost(
         navController = navController,
-        startDestination = Screen.Onboarding.route
+        startDestination = startDest
     ) {
         // --- Onboarding & User Setup Flow ---
         composable(Screen.Onboarding.route) { OnboardingScreen(navController = navController) }
         composable(Screen.Login.route) { LoginScreen(navController = navController) }
         composable(Screen.Register.route) { RegisterScreen(navController = navController) }
-        composable(Screen.WeightPicker.route) { WeightPickerScreen(navController = navController) }
-        composable(Screen.HeightPicker.route) { HeightPickerScreen(navController = navController) }
+        composable(Screen.WeightPicker.route) { WeightPickerScreen(navController = navController, userViewModel = userViewModel) }
+        composable(Screen.HeightPicker.route) { HeightPickerScreen(navController = navController, userViewModel = userViewModel) }
         composable(Screen.GoalSelection.route) { GoalSelectionScreen(navController = navController, userViewModel = userViewModel) }
         composable(Screen.GenderSelection.route) { GenderSelectionScreen(navController = navController, userViewModel = userViewModel) }
-        composable(Screen.PhysicalActivityLevel.route) { PhysicalActivityLevelScreen(navController = navController) }
+        composable(Screen.PhysicalActivityLevel.route) { PhysicalActivityLevelScreen(navController = navController, userViewModel = userViewModel) }
 
         // --- Main App Screens ---
         composable(Screen.Profile.route) { ProfileScreen(navController = navController) }

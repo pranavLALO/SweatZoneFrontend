@@ -1,6 +1,7 @@
 package com.example.sweatzone
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -120,32 +121,60 @@ fun DietOverviewScreen(
 
 @Composable
 fun MealItem(meal: DietMealDto) {
+    var expanded by remember { mutableStateOf(false) }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 6.dp),
+            .padding(vertical = 6.dp)
+            .clickable { expanded = !expanded },
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Row(
-            modifier = Modifier.padding(14.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column {
+        Column(modifier = Modifier.padding(14.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = meal.meal_name,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = meal.meal_type.replaceFirstChar { it.uppercase() },
+                        fontSize = 12.sp,
+                        color = Color.Gray
+                    )
+                }
                 Text(
-                    text = meal.meal_name,
+                    text = "${meal.calories} kcal",
                     fontWeight = FontWeight.Bold
                 )
-                Text(
-                    text = meal.meal_time.replaceFirstChar { it.uppercase() },
-                    fontSize = 12.sp,
-                    color = Color.Gray
-                )
             }
-            Text(
-                text = "${meal.calories} kcal",
-                fontWeight = FontWeight.Bold
-            )
+
+            if (expanded) {
+                Spacer(modifier = Modifier.height(12.dp))
+                HorizontalDivider(thickness = 0.5.dp, color = Color.LightGray)
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    MacroItem("Protein", "${meal.protein}g", Color(0xFF388E3C))
+                    MacroItem("Carbs", "${meal.carbs}g", Color(0xFF1976D2))
+                    MacroItem("Fats", "${meal.fats}g", Color(0xFFF57C00))
+                }
+            }
         }
+    }
+}
+
+@Composable
+fun MacroItem(label: String, value: String, color: Color) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(text = value, fontWeight = FontWeight.Bold, color = color, fontSize = 16.sp)
+        Text(text = label, fontSize = 12.sp, color = Color.Gray)
     }
 }

@@ -51,7 +51,7 @@ fun BodybuilderSplitsScreen(navController: NavController) {
             )
         },
         bottomBar = {
-            AppBottomNavigationBar(navController = navController, homeRoute = Screen.BeginnerHome.route)
+            AppBottomNavigationBar(navController = navController)
         },
         containerColor = bgColor
     ) { innerPadding ->

@@ -35,13 +35,15 @@ import com.example.sweatzone.ui.theme.SweatzoneTheme
 
 @Composable
 fun FullBodyHomeWorkoutsScreen(navController: NavController) {
+    val userViewModel: UserViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
     // Elegant pale pink background to match the theme
     val pinkBg = Color(0xFFFFF0F5)
+    val startTime = androidx.compose.runtime.remember { System.currentTimeMillis() }
 
     Scaffold(
         bottomBar = {
             // Assuming the homeRoute for this flow is the Beginner Home Screen
-            AppBottomNavigationBar(navController = navController, homeRoute = Screen.BeginnerHome.route)
+            AppBottomNavigationBar(navController = navController)
         }
     ) { innerPadding ->
         LazyColumn(
@@ -153,6 +155,23 @@ fun FullBodyHomeWorkoutsScreen(navController: NavController) {
                 )
             }
 
+
+            item {
+                Button(
+                    onClick = {
+                        val duration = ((System.currentTimeMillis() - startTime) / 1000).toInt()
+                        userViewModel.logWorkout("full_body", "high", duration) {
+                            navController.popBackStack()
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE0FF63))
+                ) {
+                    Text(text = "Finish Workout", color = Color.Black)
+                }
+            }
 
             item { Spacer(modifier = Modifier.height(24.dp)) }
         }

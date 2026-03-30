@@ -88,6 +88,7 @@ fun ArnoldWorkoutScreen(navController: NavController) {
                 Spacer(modifier = Modifier.height(24.dp))
                 // Sample Routine
                 SampleRoutineSection(primaryTextColor, secondaryTextColor, accentColor)
+
                 Spacer(modifier = Modifier.height(24.dp))
             }
         }
@@ -99,31 +100,59 @@ fun ArnoldWorkoutScreen(navController: NavController) {
 
 @Composable
 private fun HeaderSection() {
-    Box(modifier = Modifier
-        .fillMaxWidth()
-        .height(250.dp)) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(350.dp) // Increased height to show more of the image like the screenshot
+    ) {
         Image(
             painter = painterResource(id = R.drawable.arnold),
             contentDescription = "Arnold Schwarzenegger",
             contentScale = ContentScale.Crop,
+            alignment = Alignment.TopCenter, // Focus on the face/top of image
             modifier = Modifier.fillMaxSize()
         )
-        // Gradient for text visibility
+
+        // Gradient for text visibility - stronger at the bottom
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(0.7f)), startY = 300f))
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color.Transparent,
+                            Color.Black.copy(alpha = 0.1f),
+                            Color.Black.copy(alpha = 0.9f)
+                        ),
+                        startY = 300f // Starts fading in lower down
+                    )
+                )
         )
+
+        // Text Overlay
         Column(
             modifier = Modifier
                 .align(Alignment.BottomStart)
-                .padding(24.dp)
+                .padding(start = 24.dp, end = 24.dp, bottom = 40.dp) // Adjusted padding
         ) {
-            Text("Arnold Schwarzenegger", color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Bold)
-            Text("7x Mr. Olympia • Golden Era Icon", color = Color.White.copy(alpha = 0.8f), fontSize = 14.sp)
+            Text(
+                text = "Arnold Schwarzenegger",
+                color = Color.White,
+                fontSize = 28.sp,
+                fontWeight = FontWeight.ExtraBold,
+                lineHeight = 34.sp
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "7x Mr. Olympia • Golden Era Icon",
+                color = Color(0xFFD0BCFF), // Slight purple tint to match the "7x" in your image
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium
+            )
         }
     }
 }
+
 
 @Composable
 private fun CareerHistorySection(primaryColor: Color, secondaryColor: Color) {

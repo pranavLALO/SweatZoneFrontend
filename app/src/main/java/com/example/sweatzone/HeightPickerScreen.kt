@@ -31,7 +31,7 @@ import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 @Composable
-fun HeightPickerScreen(navController: NavController) {
+fun HeightPickerScreen(navController: NavController, userViewModel: UserViewModel) {
     // State: Use Int for easier list indexing/snapping
     var height by remember { mutableIntStateOf(170) }
     var unit by remember { mutableStateOf("cm") }
@@ -241,7 +241,10 @@ fun HeightPickerScreen(navController: NavController) {
 
         OnboardingFooter(
             onBack = { navController.popBackStack() },
-            onNext = { navController.navigate(Screen.GoalSelection.route) }
+            onNext = { 
+                userViewModel.setHeight(height) // Save to VM
+                navController.navigate(Screen.GoalSelection.route) 
+            }
         )
     }
 }
@@ -252,6 +255,6 @@ fun HeightPickerScreen(navController: NavController) {
 @Composable
 fun HeightPickerScreenPreview() {
     SweatzoneTheme {
-        HeightPickerScreen(rememberNavController())
+        HeightPickerScreen(rememberNavController(), UserViewModel())
     }
 }

@@ -8,6 +8,5 @@ data class MealDto(
     val protein: Int,
     val carbs: Int,
     val fats: Int,
-    val purpose: String,
-    val is_vegetarian: Int
+    val purpose: String
 )

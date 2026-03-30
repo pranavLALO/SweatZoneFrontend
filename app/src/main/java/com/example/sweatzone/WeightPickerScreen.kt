@@ -33,7 +33,7 @@ import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 @Composable
-fun WeightPickerScreen(navController: NavController) {
+fun WeightPickerScreen(navController: NavController, userViewModel: UserViewModel) {
     // State: We use Int for easier snapping logic
     var weight by remember { mutableIntStateOf(70) }
     var unit by remember { mutableStateOf("kg") }
@@ -241,7 +241,10 @@ fun WeightPickerScreen(navController: NavController) {
 
         OnboardingFooter(
             onBack = { navController.popBackStack() },
-            onNext = { navController.navigate(Screen.HeightPicker.route) }
+            onNext = { 
+                userViewModel.setWeight(weight.toDouble()) // Save to VM
+                navController.navigate(Screen.HeightPicker.route) 
+            }
         )
     }
 }
@@ -265,6 +268,6 @@ fun Modifier.zIndex(zIndex: Float) = this.then(
 @Composable
 fun WeightPickerScreenPreview() {
     SweatzoneTheme {
-        WeightPickerScreen(rememberNavController())
+        WeightPickerScreen(rememberNavController(), UserViewModel())
     }
 }

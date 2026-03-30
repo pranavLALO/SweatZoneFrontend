@@ -39,10 +39,15 @@ interface ApiService {
     // -------------------------
     // MEALS (Browse)
     // -------------------------
+    @GET("profile/get_body_profile.php")
+    suspend fun getBodyProfile(
+        @Query("user_id") userId: Int
+    ): Response<BodyProfileResponse>
 
     @GET("meals/get_meals.php")
     suspend fun getMeals(
-        @Query("goal") goal: String
+        @Query("goal") goal: String,
+        @Query("is_vegetarian") isVegetarian: Int
     ): Response<MealsResponse>
 
     // -------------------------
@@ -55,8 +60,35 @@ interface ApiService {
         @Body request: GenerateDietRequest
     ): Response<GenerateDietResponse>
 
+    @POST("workouts/log.php")
+    @Headers("Content-Type: application/json")
+    suspend fun logWorkout(
+        @Body request: LogWorkoutRequest
+    ): Response<BasicResponse>
+
     @GET("diet/get_today_plan.php")
     suspend fun getTodayDietPlan(
         @Query("user_id") userId: Int
     ): Response<TodayDietResponse>
+
+    @GET("workouts/stats.php")
+    suspend fun getWorkoutStats(
+        @Query("period") period: String = "week"
+    ): Response<StatsResponse>
+
+    // -------------------------
+    // FORM SCORES
+    // -------------------------
+
+    @POST("workouts/save_form_score.php")
+    @Headers("Content-Type: application/json")
+    suspend fun saveFormScore(
+        @Body request: SaveScoreRequest
+    ): Response<BasicResponse>
+
+    @GET("workouts/get_top_scores.php")
+    suspend fun getTopScores(
+        @Query("user_id") userId: Int,
+        @Query("exercise_name") exerciseName: String? = null
+    ): Response<TopScoresResponse>
 }

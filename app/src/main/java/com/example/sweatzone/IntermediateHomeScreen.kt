@@ -37,7 +37,8 @@ fun IntermediateHomeScreen(navController: NavController) {
         bottomBar = {
             AppBottomNavigationBar(
                 navController = navController,
-                homeRoute = Screen.IntermediateHome.route
+                homeRoute = Screen.IntermediateHome.route,
+                workoutsRoute = Screen.IntermediateWorkouts.route
             )
         }
     ) { innerPadding ->
@@ -66,12 +67,25 @@ fun IntermediateHomeScreen(navController: NavController) {
                 IntStatCard(
                     modifier = Modifier.weight(1f),
                     title = "Goal",
-                    mainValue = "50%",
+                    mainValue = "Progess",
                     subValue = "Monthly Progress",
                     icon = Icons.Default.Flag,
                     backgroundColor = Color(0xFFE3F2FD),
                     contentColor = Color(0xFF1976D2),
-                    onClick = { navController.navigate(Screen.GoalSelection.route) }
+                    onClick = { 
+                        val goal = com.example.sweatzone.data.local.TokenManager.getUserGoal()
+                        val gender = com.example.sweatzone.data.local.TokenManager.getUserGender()
+                        
+                        if (goal?.contains("Strength Training", ignoreCase = true) == true) {
+                            if (gender == "Male") {
+                                navController.navigate(Screen.StrengthTrainingMale.route)
+                            } else {
+                                navController.navigate(Screen.StrengthTrainingFemale.route)
+                            }
+                        } else {
+                            navController.navigate(Screen.GoalSelection.route)
+                        }
+                    }
                 )
                 IntStatCard(
                     modifier = Modifier.weight(1f),
@@ -113,14 +127,14 @@ private fun IntHomeGreeting() {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column {
-            Text(text = "Hi, Alex!", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+            Text(text = "Hi", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color.Black)
             Text(text = "Keep pushing forward.", fontSize = 14.sp, color = Color.Gray)
         }
         Box(
             modifier = Modifier.size(48.dp).clip(CircleShape).background(Color(0xFFF5F5F5)),
             contentAlignment = Alignment.Center
         ) {
-            Icon(imageVector = Icons.Default.Person, contentDescription = "Profile", tint = Color.Black)
+
         }
     }
 }

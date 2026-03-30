@@ -239,6 +239,7 @@ fun RonnieColemanWorkoutScreen(navController: NavController) {
                         }
                     }
                 }
+
                 Spacer(modifier = Modifier.height(24.dp))
             }
         }

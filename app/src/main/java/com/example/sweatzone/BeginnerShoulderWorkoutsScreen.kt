@@ -20,7 +20,9 @@ import com.example.sweatzone.ui.components.ExerciseItem
 
 @Composable
 fun BeginnerShoulderWorkoutsScreen(navController: NavController) {
+    val userViewModel: UserViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
     val lavenderBg = Color(0xFFF3E5F5)
+    val startTime = androidx.compose.runtime.remember { System.currentTimeMillis() }
 
     Scaffold(
         bottomBar = {
@@ -101,6 +103,23 @@ fun BeginnerShoulderWorkoutsScreen(navController: NavController) {
                     instructions = listOf("Attach rope to high pulley.", "Pull rope towards face, separating hands.", "Squeeze rear delts."),
                     benefits = listOf("Targets rear deltoids and rotator cuff.", "Improves posture.", "Balances shoulder strength.")
                 )
+            }
+
+            item {
+                Button(
+                    onClick = {
+                        val duration = ((System.currentTimeMillis() - startTime) / 1000).toInt()
+                        userViewModel.logWorkout("shoulder", "medium", duration) {
+                            navController.popBackStack()
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE0FF63))
+                ) {
+                    Text(text = "Finish Workout", color = Color.Black)
+                }
             }
 
             item { Spacer(modifier = Modifier.height(16.dp)) }

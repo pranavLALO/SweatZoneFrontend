@@ -14,8 +14,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
-import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -38,7 +38,12 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import androidx.navigation.NavController
+import com.example.sweatzone.data.api.RetrofitClient
+import com.example.sweatzone.data.dto.SaveScoreRequest
+import com.example.sweatzone.data.dto.ScoreItem
 import com.example.sweatzone.ui.components.AppBottomNavigationBar
+import com.example.sweatzone.utils.FormAnalyzer
+import com.example.sweatzone.utils.FormResult
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.pose.PoseDetection
 import com.google.mlkit.vision.pose.PoseLandmark
@@ -47,8 +52,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
-import kotlin.math.abs
-import kotlin.math.atan2
 
 /* ====================== SCREEN ====================== */
 
@@ -61,7 +64,31 @@ fun AIFormCorrectorScreen(navController: NavController) {
 
     var selectedWorkout by remember { mutableStateOf("Squat") }
     var isAnalyzing by remember { mutableStateOf(false) }
-    var resultMessage by remember { mutableStateOf("") }
+    
+    // State for Analysis Result
+    var formResult by remember { mutableStateOf<FormResult?>(null) }
+    
+    // State for Top Scores
+    var topScores by remember { mutableStateOf<List<ScoreItem>>(emptyList()) }
+    var isLoadingScores by remember { mutableStateOf(false) }
+
+    // Fetch Top Scores when screen loads or workout changes
+    LaunchedEffect(selectedWorkout) {
+        isLoadingScores = true
+        try {
+            val userId = com.example.sweatzone.data.local.TokenManager.getUserId()
+            if (userId != -1) {
+                val response = RetrofitClient.api.getTopScores(userId, selectedWorkout)
+                if (response.isSuccessful) {
+                    topScores = response.body()?.data ?: emptyList()
+                }
+            }
+        } catch (e: Exception) {
+            // Handle error silently or show snackbar
+        } finally {
+            isLoadingScores = false
+        }
+    }
 
     val poseDetector = remember {
         PoseDetection.getClient(
@@ -78,10 +105,11 @@ fun AIFormCorrectorScreen(navController: NavController) {
         if (uri == null) return@rememberLauncherForActivityResult
 
         isAnalyzing = true
-        resultMessage = "Analyzing $selectedWorkout form..."
+        formResult = null // Reset previous result
 
         scope.launch(Dispatchers.IO) {
             try {
+                val userId = com.example.sweatzone.data.local.TokenManager.getUserId()
                 val retriever = android.media.MediaMetadataRetriever()
                 retriever.setDataSource(context, uri)
 
@@ -121,51 +149,70 @@ fun AIFormCorrectorScreen(navController: NavController) {
 
                             minBodyAngle = minOf(
                                 minBodyAngle,
-                                calculateAngle(shoulder, hip, ankle)
+                                FormAnalyzer.calculateAngle(shoulder, hip, ankle)
                             )
 
                             if (knee != null) {
                                 minKneeAngle = minOf(
                                     minKneeAngle,
-                                    calculateAngle(hip, knee, ankle)
+                                    FormAnalyzer.calculateAngle(hip, knee, ankle)
                                 )
                                 minBackAngle = minOf(
                                     minBackAngle,
-                                    calculateAngle(shoulder, hip, knee)
+                                    FormAnalyzer.calculateAngle(shoulder, hip, knee)
                                 )
                             }
 
                             if (elbow != null && wrist != null) {
                                 minElbowAngle = minOf(
                                     minElbowAngle,
-                                    calculateAngle(shoulder, elbow, wrist)
+                                    FormAnalyzer.calculateAngle(shoulder, elbow, wrist)
                                 )
                             }
                         }
                     } catch (_: Exception) {
                     } finally {
-                        bitmap.recycle()
+                        bitmap.recycle() // Important to prevent OOM
                     }
                 }
 
                 retriever.release()
 
-                val finalMessage = when (selectedWorkout) {
-                    "Squat" -> analyzeSquat(minKneeAngle, minBackAngle, validFrames)
-                    "Push-up" -> analyzePushUp(minElbowAngle, minBodyAngle, validFrames)
-                    "Plank" -> analyzePlank(minBodyAngle, validFrames)
-                    else -> "Workout not supported"
+                // Perform Analysis
+                val result = when (selectedWorkout) {
+                    "Squat" -> FormAnalyzer.analyzeSquat(minKneeAngle, minBackAngle, validFrames)
+                    "Push-up" -> FormAnalyzer.analyzePushUp(minElbowAngle, minBodyAngle, validFrames)
+                    "Plank" -> FormAnalyzer.analyzePlank(minBodyAngle, validFrames)
+                    else -> FormResult(0, emptyList(), "Unsupported workout", false)
+                }
+
+                // Save Score to Backend
+                if (userId != -1 && validFrames >= 5) {
+                     try {
+                        RetrofitClient.api.saveFormScore(
+                            SaveScoreRequest(userId, selectedWorkout, result.score, null)
+                        )
+                        // Refresh top scores
+                        val scoresResponse = RetrofitClient.api.getTopScores(userId, selectedWorkout)
+                        if (scoresResponse.isSuccessful) {
+                           withContext(Dispatchers.Main) {
+                               topScores = scoresResponse.body()?.data ?: emptyList()
+                           }
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
                 }
 
                 withContext(Dispatchers.Main) {
                     isAnalyzing = false
-                    resultMessage = finalMessage
+                    formResult = result
                 }
 
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
                     isAnalyzing = false
-                    Toast.makeText(context, e.message, Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_LONG).show()
                 }
             }
         }
@@ -173,46 +220,61 @@ fun AIFormCorrectorScreen(navController: NavController) {
 
     Scaffold(
         topBar = { AIFormCorrectorTopBar(navController) },
-        bottomBar = { AppBottomNavigationBar(navController, homeRoute = "tools") },
+        bottomBar = { AppBottomNavigationBar(navController) },
         containerColor = Color(0xFFF8F9FA)
     ) { padding ->
 
         Column(
             modifier = Modifier
                 .padding(padding)
-                .padding(20.dp)
+                .padding(horizontal = 20.dp)
                 .verticalScroll(scrollState)
         ) {
+            Spacer(Modifier.height(16.dp))
 
+            // Workout Selector
             Text("Select Workout", fontSize = 18.sp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(12.dp))
 
-            WorkoutSelectionItem("Squat", selectedWorkout == "Squat") {
-                selectedWorkout = "Squat"
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                listOf("Squat", "Push-up", "Plank").forEach {
+                    WorkoutChip(it, selectedWorkout == it) { selectedWorkout = it }
+                }
             }
-            WorkoutSelectionItem("Push-up", selectedWorkout == "Push-up") {
-                selectedWorkout = "Push-up"
-            }
-            WorkoutSelectionItem("Plank", selectedWorkout == "Plank") {
-                selectedWorkout = "Plank"
-            }
-
+            
             Spacer(Modifier.height(24.dp))
 
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(160.dp)
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(Color.White)
-                    .dashedBorder(2.dp, Color.LightGray, 16.dp)
-                    .clickable { launcher.launch("video/*") },
-                contentAlignment = Alignment.Center
-            ) {
-                if (isAnalyzing) {
-                    CircularProgressIndicator()
-                } else {
-                    Text("Tap to upload video")
+            // Result Section (If available)
+            formResult?.let { result ->
+                FormResultSection(selectedWorkout, result)
+                Spacer(Modifier.height(24.dp))
+            }
+
+            // Upload Box (Only show if not analyzing, or show simple button if result exists)
+            if (!isAnalyzing) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(if (formResult == null) 160.dp else 60.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(Color.White)
+                        .dashedBorder(2.dp, Color.LightGray, 16.dp)
+                        .clickable { launcher.launch("video/*") },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        if (formResult == null) "Tap to upload video for analysis" else "Analyze a New Video",
+                        fontWeight = FontWeight.Medium,
+                        color = Color(0xFF1976D2)
+                    )
+                }
+            } else {
+                 Box(Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        CircularProgressIndicator()
+                        Spacer(Modifier.height(8.dp))
+                        Text("Analyzing Form...", color = Color.Gray)
+                    }
                 }
             }
 
@@ -220,40 +282,25 @@ fun AIFormCorrectorScreen(navController: NavController) {
 
             SampleWorkoutVideo(selectedWorkout)
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(32.dp))
 
-            if (resultMessage.isNotEmpty()) {
-                Text(
-                    text = resultMessage,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = if (resultMessage.contains("✅")) Color(0xFF2E7D32) else Color.Red
-                )
+            // Top Scores Section
+            Text("Your Top Scores", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(12.dp))
+            
+            if (isLoadingScores) {
+                CircularProgressIndicator(modifier = Modifier.size(24.dp))
+            } else if (topScores.isEmpty()) {
+                Text("No scores yet. Upload a video!", color = Color.Gray)
+            } else {
+                topScores.forEachIndexed { index, score ->
+                    TopScoreItem(index + 1, score)
+                }
             }
+            
+             Spacer(Modifier.height(24.dp))
         }
     }
-}
-
-/* ====================== ANALYSIS ====================== */
-
-fun analyzeSquat(knee: Double, back: Double, frames: Int) = when {
-    frames < 5 -> "❌ Body not detected"
-    knee > 120 -> "⚠️ Squat too shallow"
-    back < 90 -> "⚠️ Back bending too much"
-    else -> "✅ Good squat form!"
-}
-
-fun analyzePushUp(elbow: Double, body: Double, frames: Int) = when {
-    frames < 5 -> "❌ Body not detected"
-    elbow > 100 -> "⚠️ Push-up too shallow"
-    body < 160 -> "⚠️ Hips sagging"
-    else -> "✅ Good push-up form!"
-}
-
-fun analyzePlank(body: Double, frames: Int) = when {
-    frames < 5 -> "❌ Body not detected"
-    body < 165 -> "⚠️ Body not straight"
-    else -> "✅ Solid plank posture!"
 }
 
 /* ====================== VIDEO ====================== */
@@ -271,11 +318,12 @@ fun SampleWorkoutVideo(workout: String) {
         else -> R.raw.squats_video
     }
 
-    val uri = Uri.parse("android.resource://${context.packageName}/$videoRes")
-
     val player = remember(videoRes) {
         ExoPlayer.Builder(context).build().apply {
+            val uri = androidx.media3.datasource.RawResourceDataSource.buildRawResourceUri(videoRes)
             setMediaItem(MediaItem.fromUri(uri))
+            repeatMode = ExoPlayer.REPEAT_MODE_ONE
+            playWhenReady = true
             prepare()
         }
     }
@@ -294,7 +342,10 @@ fun SampleWorkoutVideo(workout: String) {
 
         AndroidView(
             factory = { ctx ->
-                PlayerView(ctx).apply { useController = true }
+                PlayerView(ctx).apply { 
+                    useController = true
+                    resizeMode = androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+                }
             },
             update = { it.player = player },
             modifier = Modifier.fillMaxSize()
@@ -321,15 +372,140 @@ fun SampleWorkoutVideo(workout: String) {
     }
 }
 
-/* ====================== UI HELPERS ====================== */
+/* ====================== UI COMPONENTS ====================== */
 
-fun calculateAngle(a: PoseLandmark, b: PoseLandmark, c: PoseLandmark): Double {
-    val angle = Math.toDegrees(
-        atan2((c.position.y - b.position.y).toDouble(), (c.position.x - b.position.x).toDouble()) -
-                atan2((a.position.y - b.position.y).toDouble(), (a.position.x - b.position.x).toDouble())
+@Composable
+fun FormResultSection(workoutName: String, result: FormResult) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(workoutName, fontSize = 32.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1A1C1E))
+        Spacer(Modifier.height(24.dp))
+
+        // Overall Score Row
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("Overall Form Score", fontSize = 16.sp, color = Color.Black)
+            Text("${result.score}/100", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+        }
+        
+        Spacer(Modifier.height(8.dp))
+        
+        // Progress Bar
+        LinearProgressIndicator(
+            progress = { result.score / 100f },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(12.dp)
+                .clip(RoundedCornerShape(6.dp)),
+            color = Color(0xFF1976D2),
+            trackColor = Color(0xFFEEEEEE),
+        )
+        Spacer(Modifier.height(4.dp))
+        Text(
+            if (result.score >= 80) "Good" else "Needs Work", 
+            color = Color(0xFF1976D2), 
+            fontSize = 14.sp,
+            modifier = Modifier.align(Alignment.Start)
+        )
+        
+        Spacer(Modifier.height(24.dp))
+        Divider(color = Color.LightGray, thickness = 0.5.dp)
+        Spacer(Modifier.height(24.dp))
+
+        // Feedback List
+        Text(
+            "Form Feedback List",
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.align(Alignment.Start)
+        )
+        Spacer(Modifier.height(16.dp))
+
+        result.feedback.forEach { item ->
+            FeedbackRow(item)
+            Spacer(Modifier.height(12.dp))
+        }
+
+        Spacer(Modifier.height(24.dp))
+
+        // Quick Tip
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(8.dp))
+                .background(Color(0xFFBBDEFB)) // Light Blue
+                .padding(16.dp)
+        ) {
+            Column {
+                Text("Quick Tip", color = Color(0xFF1976D2), fontWeight = FontWeight.Bold)
+                Spacer(Modifier.height(4.dp))
+                Text(result.quickTip, color = Color(0xFF0D47A1), fontSize = 14.sp)
+            }
+        }
+    }
+}
+
+@Composable
+fun FeedbackRow(item: com.example.sweatzone.utils.FeedbackItem) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(if (item.isPositive) Color(0xFFE3F2FD) else Color(0xFFFFEBEE)), // Blue vs Red bg
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                if (item.isPositive) Icons.Default.CheckCircle else Icons.Default.Close,
+                contentDescription = null,
+                tint = if (item.isPositive) Color(0xFF1976D2) else Color(0xFFD32F2F),
+                modifier = Modifier.size(24.dp)
+            )
+        }
+        Spacer(Modifier.width(16.dp))
+        Text(item.message, fontSize = 16.sp, color = Color(0xFF1A1C1E))
+    }
+}
+
+@Composable
+fun TopScoreItem(rank: Int, score: ScoreItem) {
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier.size(32.dp).clip(CircleShape).background(Color(0xFF1976D2)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("#$rank", color = Color.White, fontWeight = FontWeight.Bold)
+            }
+            Spacer(Modifier.width(16.dp))
+            Column {
+                Text("Score: ${score.score}", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Text(score.createdAt.take(10), color = Color.Gray, fontSize = 12.sp)
+            }
+        }
+    }
+}
+
+@Composable
+fun WorkoutChip(name: String, selected: Boolean, onClick: () -> Unit) {
+    FilterChip(
+        selected = selected,
+        onClick = onClick,
+        label = { Text(name) },
+        colors = FilterChipDefaults.filterChipColors(
+            selectedContainerColor = Color(0xFF1976D2),
+            selectedLabelColor = Color.White
+        )
     )
-    val result = abs(angle)
-    return if (result > 180) 360 - result else result
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -345,31 +521,6 @@ fun AIFormCorrectorTopBar(navController: NavController) {
     )
 }
 
-@Composable
-fun WorkoutSelectionItem(title: String, selected: Boolean, onClick: () -> Unit) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 6.dp)
-            .clickable { onClick() },
-        colors = CardDefaults.cardColors(
-            containerColor = if (selected) Color(0xFFE3F2FD) else Color.White
-        )
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(title, modifier = Modifier.weight(1f))
-            Icon(
-                if (selected) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
-                null,
-                tint = if (selected) Color(0xFF1976D2) else Color.Gray
-            )
-        }
-    }
-}
-
 fun Modifier.dashedBorder(width: Dp, color: Color, radius: Dp) = drawBehind {
     drawRoundRect(
         color = color,
@@ -380,3 +531,4 @@ fun Modifier.dashedBorder(width: Dp, color: Color, radius: Dp) = drawBehind {
         cornerRadius = CornerRadius(radius.toPx())
     )
 }
+

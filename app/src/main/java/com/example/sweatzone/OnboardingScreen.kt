@@ -80,8 +80,8 @@ fun OnboardingScreen(navController: NavController) {
 
                 // Subtitle Text
                 Text(
-                    text = "Start your fitness journey\nwith our app's guidance and support.",
-                    fontSize = 16.sp,
+                    text = "Progess Over Perfection",
+                    fontSize = 25.sp,
                     color = Color.White.copy(alpha = 0.8f),
                     lineHeight = 24.sp
                 )

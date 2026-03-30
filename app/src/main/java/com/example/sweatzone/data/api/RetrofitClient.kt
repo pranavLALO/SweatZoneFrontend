@@ -5,12 +5,41 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitClient {
 
-    private const val BASE_URL = "https://l94j6t52-80.inc1.devtunnels.ms/SweatZone/"
+    // Physical Device IP (Host PC IP) - Updated based on your network config
+    private const val BASE_URL = "http://192.168.118.119/SweatZone/"
+
+    // For Android Emulator: "http://10.0.2.2/SweatZone/"
 
     val api: ApiService by lazy {
+        val client = okhttp3.OkHttpClient.Builder()
+            .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+            .readTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+            .writeTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+            .writeTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+            .addInterceptor(okhttp3.logging.HttpLoggingInterceptor().apply {
+                level = okhttp3.logging.HttpLoggingInterceptor.Level.BODY
+            })
+            .addInterceptor { chain ->
+                val original = chain.request()
+                val token = com.example.sweatzone.data.local.TokenManager.getToken()
+                val requestBuilder = original.newBuilder()
+                
+                if (!token.isNullOrEmpty()) {
+                    requestBuilder.header("Authorization", "Bearer $token")
+                }
+                
+                // Bypass VS Code DevTunnel Warning Page
+                requestBuilder.header("X-Tunnel-Skip-Anti-Phishing-Page", "1")
+                
+                val request = requestBuilder.build()
+                chain.proceed(request)
+            }
+            .build()
+
         Retrofit.Builder()
             .baseUrl(BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create())
+            .client(client)
+            .addConverterFactory(GsonConverterFactory.create(com.google.gson.GsonBuilder().setLenient().create()))
             .build()
             .create(ApiService::class.java)
     }

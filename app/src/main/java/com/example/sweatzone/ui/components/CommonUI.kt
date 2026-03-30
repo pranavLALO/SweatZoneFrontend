@@ -183,7 +183,8 @@ fun WorkoutCategoryCard(
 @Composable
 fun ExerciseItem(
     title: String,
-    videoResId: Int,
+    videoResId: Int = 0,
+    videoUrl: String? = null,
     instructions: List<String>,
     benefits: List<String>
 ) {
@@ -218,7 +219,14 @@ fun ExerciseItem(
                 val exoPlayer = remember {
                     ExoPlayer.Builder(context).build().apply {
                         try {
-                            if (videoResId != 0) { // Check for a valid resource ID
+                            if (!videoUrl.isNullOrEmpty()) {
+                                val mediaItem = MediaItem.fromUri(Uri.parse(videoUrl))
+                                setMediaItem(mediaItem)
+                                repeatMode = Player.REPEAT_MODE_ONE // Loop the video
+                                playWhenReady = true
+                                prepare()
+                                volume = 0f // Start muted for autoplay UX
+                            } else if (videoResId != 0) { // Check for a valid resource ID
                                 val videoUri = Uri.parse("android.resource://${context.packageName}/$videoResId")
                                 val mediaItem = MediaItem.fromUri(videoUri)
                                 setMediaItem(mediaItem)

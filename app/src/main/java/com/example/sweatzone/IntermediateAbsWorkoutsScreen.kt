@@ -94,7 +94,7 @@ fun IntermediateAbsWorkoutsScreen(navController: NavController) {
                         "Grasp the rope and pull it down until your hands are next to your face.",
                         "Flex your hips slightly and allow the weight to hyperextend your lower back.",
                         "Keeping your hips stationary, crunch your upper body down towards your knees.",
-                        "Squeeze your abs hard at the bottom and slowly return to the start."
+                        "Squeeze your abs hard at the bottom and slowly return to the start ."
                     ),
                     benefits = listOf(
                         "Allows you to add weight for progressive overload on your abs.",

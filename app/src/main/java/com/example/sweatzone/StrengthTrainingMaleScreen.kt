@@ -67,42 +67,42 @@ fun StrengthTrainingMaleScreen(navController: NavController) {
 
             item { ExerciseItem(
                 title = "Barbell Squats",
-                videoResId = R.raw.squats_video, // Ensure videos are in res/raw
+                videoResId = 0, // Ensure videos are in res/raw
                 instructions = listOf("Rest the barbell on your upper back.", "Lower your hips back and down, keeping your chest up.", "Go until your thighs are parallel to the floor, then drive back up."),
                 benefits = listOf("Builds overall leg mass and strength.", "Increases core stability and hormone release.")
             )}
 
             item { ExerciseItem(
                 title = "Bench Press",
-                videoResId = R.raw.bench_press_video,
+                videoResId = 0,
                 instructions = listOf("Lie on a flat bench, grab the bar with a medium grip.", "Lower the bar to your mid-chest.", "Push the bar back up until your arms are fully extended."),
                 benefits = listOf("Builds upper body pushing strength.", "Targets chest, shoulders, and triceps.")
             )}
 
             item { ExerciseItem(
                 title = "Bent-Over Rows",
-                videoResId = R.raw.barbell_rows_video,
+                videoResId = 0,
                 instructions = listOf("Hold a barbell with a wide grip, bend at your hips.", "Keep your back straight and pull the bar towards your lower chest.", "Squeeze your back muscles at the top."),
                 benefits = listOf("Builds a thick and strong back.", "Improves posture and pulling strength.")
             )}
 
             item { ExerciseItem(
                 title = "Overhead Press",
-                videoResId = R.raw.overhead_press_video,
+                videoResId = 0,
                 instructions = listOf("Start with a barbell at your shoulders.", "Press the bar directly overhead until your arms are locked out.", "Lower the bar back to your shoulders with control."),
                 benefits = listOf("Builds strong and stable shoulders.", "Excellent for overall upper body power.")
             )}
 
             item { ExerciseItem(
                 title = "Bicep Curls",
-                videoResId = R.raw.bicep_curls_video,
+                videoResId = 0,
                 instructions = listOf("Stand holding dumbbells at your sides, palms facing forward.", "Curl the weights up towards your shoulders.", "Squeeze the biceps at the top and lower slowly."),
                 benefits = listOf("Isolates and builds the bicep muscles for bigger arms.", "Improves grip strength.")
             )}
 
             item { ExerciseItem(
                 title = "Tricep Dips",
-                videoResId = R.raw.tricep_extension_video,
+                videoResId = 0,
                 instructions = listOf("Use parallel bars or a sturdy bench.", "Lower your body until your elbows are at a 90-degree angle.", "Push back up to the starting position."),
                 benefits = listOf("Builds tricep mass and lockout strength.", "Great bodyweight exercise for arms.")
             )}

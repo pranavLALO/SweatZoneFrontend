@@ -34,6 +34,19 @@ fun NavGraph() {
         // --- Onboarding & User Setup Flow ---
         composable(Screen.Onboarding.route) { OnboardingScreen(navController = navController) }
         composable(Screen.Login.route) { LoginScreen(navController = navController) }
+        
+        // --- Password Reset Flow ---
+        composable("forgot_password") { ForgotPasswordScreen(navController = navController) }
+        composable("verify_otp/{email}") { backStackEntry ->
+            val email = backStackEntry.arguments?.getString("email") ?: ""
+            VerifyOtpScreen(navController = navController, email = email)
+        }
+        composable("reset_password/{email}/{otp}") { backStackEntry ->
+            val email = backStackEntry.arguments?.getString("email") ?: ""
+            val otp = backStackEntry.arguments?.getString("otp") ?: ""
+            ResetPasswordScreen(navController = navController, email = email, otp = otp)
+        }
+
         composable(Screen.Register.route) { RegisterScreen(navController = navController) }
         composable(Screen.WeightPicker.route) { WeightPickerScreen(navController = navController, userViewModel = userViewModel) }
         composable(Screen.HeightPicker.route) { HeightPickerScreen(navController = navController, userViewModel = userViewModel) }
@@ -91,12 +104,12 @@ fun NavGraph() {
         composable(Screen.BeginnerBackWorkouts.route) { BeginnerBackWorkoutsScreen(navController) }
 
         // --- Intermediate Workout Details ---
-        composable(Screen.IntermediateChestWorkouts.route) { IntermediateChestWorkoutsScreen(navController) }
-        composable(Screen.IntermediateShoulderWorkouts.route) { IntermediateShoulderWorkoutsScreen(navController) }
-        composable(Screen.IntermediateArmsWorkouts.route) { IntermediateArmsWorkoutsScreen(navController) }
-        composable(Screen.IntermediateLegsWorkouts.route) { IntermediateLegsWorkoutsScreen(navController) }
-        composable(Screen.IntermediateAbsWorkouts.route) { IntermediateAbsWorkoutsScreen(navController) }
-        composable(Screen.IntermediateBackWorkouts.route) { IntermediateBackWorkoutsScreen(navController) }
+        composable(Screen.IntermediateChestWorkouts.route) { IntermediateChestWorkoutsScreen(navController, userViewModel) }
+        composable(Screen.IntermediateShoulderWorkouts.route) { IntermediateShoulderWorkoutsScreen(navController, userViewModel) }
+        composable(Screen.IntermediateArmsWorkouts.route) { IntermediateArmsWorkoutsScreen(navController, userViewModel) }
+        composable(Screen.IntermediateLegsWorkouts.route) { IntermediateLegsWorkoutsScreen(navController, userViewModel) }
+        composable(Screen.IntermediateAbsWorkouts.route) { IntermediateAbsWorkoutsScreen(navController, userViewModel) }
+        composable(Screen.IntermediateBackWorkouts.route) { IntermediateBackWorkoutsScreen(navController, userViewModel) }
 
         // blog screen
         // Inside your NavHost block
@@ -142,8 +155,32 @@ fun NavGraph() {
 
 
 
+        composable("workout_library") {
+            WorkoutLibraryScreen(navController = navController, userViewModel = userViewModel)
+        }
+
+        composable("custom_plans") {
+            CustomPlansScreen(navController = navController, userViewModel = userViewModel)
+        }
+
+        composable(Screen.PersonalizedProgress.route) {
+            PersonalizedProgressScreen(navController = navController, userViewModel = userViewModel)
+        }
+
+        composable("custom_workout/{routineId}") { backStackEntry ->
+            val routineId = backStackEntry.arguments?.getString("routineId")?.toIntOrNull() ?: 0
+            com.example.sweatzone.ui.components.CustomWorkoutTemplate(navController, routineId, userViewModel)
+        }
+
         composable("video_analysis") {
             AIFormCorrectorScreen(navController = navController)
+        }
+        composable(Screen.WorkoutSummary.route) { backStackEntry ->
+            val muscleGroup = backStackEntry.arguments?.getString("muscleGroup") ?: ""
+            WorkoutSummaryScreen(navController, muscleGroup, userViewModel)
+        }
+        composable(Screen.PersonalizedProgress.route) {
+            PersonalizedProgressScreen(navController, userViewModel)
         }
     }
 }

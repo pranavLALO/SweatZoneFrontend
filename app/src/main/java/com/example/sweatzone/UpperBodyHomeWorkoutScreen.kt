@@ -88,7 +88,7 @@ fun UpperBodyHomeWorkoutScreen(navController: NavController) {
             item {
                 UpperBodyExerciseItem(
                     title = "Push-Ups",
-                    videoResId = R.raw.pushup_video, // Ensure you have pushup_video.mp4
+                    videoResId = 0, // Ensure you have pushup_video.mp4
                     instructions = listOf(
                         "Stand with your feet shoulder-width apart, chest up, and core engaged.",
                         "Lower your hips back and down as if sitting in a chair, keeping your back straight.",
@@ -109,7 +109,7 @@ fun UpperBodyHomeWorkoutScreen(navController: NavController) {
             item {
                 UpperBodyExerciseItem(
                     title = "Incline Push-Ups",
-                    videoResId = R.raw.incline_pushup_video, // Ensure you have incline_pushup_video.mp4
+                    videoResId = 0, // Ensure you have incline_pushup_video.mp4
                     instructions = listOf(
                         "Place your hands on an elevated surface like a bench, step, or sturdy chair, slightly wider than shoulder-width apart.",
                         "Step your feet back so your body forms a straight line from head to heels; engage your core and glutes.",
@@ -129,7 +129,7 @@ fun UpperBodyHomeWorkoutScreen(navController: NavController) {
             item {
                 UpperBodyExerciseItem(
                     title = "Pike Push-Ups",
-                    videoResId = R.raw.pike_pushup_video, // Ensure you have pike_pushup_video.mp4
+                    videoResId = 0, // Ensure you have pike_pushup_video.mp4
                     instructions = listOf(
                         "Start in a downward dog yoga position with your hands shoulder-width apart. Your body should form an inverted V shape.",
                         "Keep your legs straight and heels elevated if necessary. Your weight should be distributed between your hands and feet.",
@@ -149,7 +149,7 @@ fun UpperBodyHomeWorkoutScreen(navController: NavController) {
             item {
                 UpperBodyExerciseItem(
                     title = "Push Up (Weighted)",
-                    videoResId = R.raw.weighted_pushup_video, // Ensure you have weighted_pushup_video.mp4
+                    videoResId = 0, // Ensure you have weighted_pushup_video.mp4
                     instructions = listOf(
                         "Assume a standard push-up position with hands slightly wider than shoulder-width. Have a partner place a weight plate on your upper back or wear a weighted vest.",
                         "Keep your core tight and body in a straight line from head to heels, avoid sagging hips or arching your back.",

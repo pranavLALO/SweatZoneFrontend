@@ -1,6 +1,11 @@
 package com.example.sweatzone
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -22,10 +27,36 @@ import com.example.sweatzone.ui.components.ExerciseItem
 import com.example.sweatzone.ui.theme.SweatzoneTheme
 
 @Composable
-fun IntermediateChestWorkoutsScreen(navController: NavController) {
-    val userViewModel: UserViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+fun IntermediateChestWorkoutsScreen(navController: NavController, userViewModel: UserViewModel) {
     val pinkBg = Color(0xFFFFF0F5)
     val startTime = androidx.compose.runtime.remember { System.currentTimeMillis() }
+
+    var exercises by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<List<com.example.sweatzone.data.dto.WorkoutExerciseDto>>(emptyList()) }
+    var isLoading by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(true) }
+    var errorMessage by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<String?>(null) }
+
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        try {
+            val response = com.example.sweatzone.data.api.RetrofitClient.api.getWorkoutExercises("chest", "intermediate")
+            if (response.isSuccessful) {
+                val body = response.body()
+                if (body != null && body.status) {
+                    exercises = body.data ?: emptyList()
+                } else {
+                    errorMessage = body?.message ?: "Unknown API error"
+                }
+            } else {
+                errorMessage = "HTTP Error: ${response.code()}"
+            }
+        } catch (e: Exception) {
+            errorMessage = e.message ?: "Failed to connect to backend"
+        } finally {
+            isLoading = false
+        }
+    }
+
+
+    val exerciseLogs = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateMapOf<Int, com.example.sweatzone.data.dto.ExerciseLog>() }
 
     Scaffold(
         bottomBar = {
@@ -66,109 +97,86 @@ fun IntermediateChestWorkoutsScreen(navController: NavController) {
                 }
             }
 
-            // Exercises
-            item {
-                ExerciseItem(
-                    title = "Dumbbell Bench Press",
-                    videoResId = R.raw.dumbbell_bench_press_video,
-                    instructions = listOf(
-                        "Lie on a flat bench with a dumbbell in each hand.",
-                        "Hold the dumbbells at the sides of your chest, palms facing forward.",
-                        "Press the weights up until your arms are fully extended.",
-                        "Slowly lower the dumbbells back to the starting position."
-                    ),
-                    benefits = listOf(
-                        "Builds chest mass and strength.",
-                        "Improves stabilizer muscles more than barbell."
+            if (isLoading) {
+                item {
+                    Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = Color.Black)
+                    }
+                }
+            } else if (errorMessage != null) {
+                item {
+                    Text(
+                        text = "Error: $errorMessage",
+                        color = Color.Red,
+                        modifier = Modifier.padding(16.dp)
                     )
-                )
-            }
-
-            item {
-                ExerciseItem(
-                    title = "Incline Dumbbell Press",
-                    videoResId = R.raw.incline_bench_video,
-                    instructions = listOf(
-                        "Lie on an incline bench (30-45 degrees).",
-                        "Hold dumbbells at your upper chest, palms forward.",
-                        "Press the dumbbells up and slightly back.",
-                        "Lower the weights slowly and with control."
-                    ),
-                    benefits = listOf(
-                        "Targets the upper pectoral muscles.",
-                        "Builds shoulder and tricep strength."
+                }
+            } else {
+                items(exercises) { exercise ->
+                    ExerciseItem(
+                        trackingMode = "intermediate",
+                        title = exercise.title,
+                        videoUrl = "${com.example.sweatzone.data.api.RetrofitClient.BASE_URL}videos/${exercise.video_filename}",
+                        instructions = exercise.instructions,
+                        benefits = exercise.benefits,
+                        plannedSets = exercise.sets ?: 3,
+                        plannedReps = try { exercise.reps?.split("-")?.first()?.toInt() ?: 12 } catch(e: Exception) { 12 },
+                        onDataChanged = { s, r ->
+                            exerciseLogs[exercise.id] = com.example.sweatzone.data.dto.ExerciseLog(
+                                exercise_title = exercise.title,
+                                sets_completed = s,
+                                reps_completed = r,
+                                weight_kg = 0,
+                                time_used_seconds = 0
+                            )
+                        }
                     )
-                )
+                }
             }
-
-            // 👇 ADDED MISSING EXERCISES BELOW
-
-            item {
-                ExerciseItem(
-                    title = "Dumbbell Flys",
-                    videoResId = R.raw.dumbbell_fly_video, // Replace with actual dumbbell_flys video
-                    instructions = listOf(
-                        "Lie on a flat bench holding dumbbells with a neutral grip.",
-                        "Start with the dumbbells directly over your chest, elbows slightly bent.",
-                        "Lower the weights in a wide arc until you feel a stretch in your chest.",
-                        "Bring the dumbbells back to the starting position using your chest muscles."
-                    ),
-                    benefits = listOf(
-                        "Isolates the pectoral muscles for a great stretch and contraction.",
-                        "Improves the width and definition of the chest."
-                    )
-                )
-            }
-
-            item {
-                ExerciseItem(
-                    title = "Cable Crossovers",
-                    videoResId = R.raw.cable_crossover_video, // Replace with actual cable_crossovers video
-                    instructions = listOf(
-                        "Set pulleys to a high position and grab the handles.",
-                        "Stand in the center, take a step forward, and lean slightly.",
-                        "With arms extended, pull the handles down and across your body.",
-                        "Squeeze your chest at the peak contraction before returning slowly."
-                    ),
-                    benefits = listOf(
-                        "Provides constant tension on the chest muscles.",
-                        "Excellent for targeting the inner and lower pecs."
-                    )
-                )
-            }
-
-            item {
-                ExerciseItem(
-                    title = "Dumbbell Pullover",
-                    videoResId = R.raw.dumbbell_pullover_video, // Replace with actual pullover video
-                    instructions = listOf(
-                        "Lie with your upper back across a flat bench.",
-                        "Hold one dumbbell with both hands, forming a diamond shape.",
-                        "Start with the dumbbell over your chest, arms slightly bent.",
-                        "Lower the weight behind your head, feeling a stretch in your lats and chest.",
-                        "Pull the dumbbell back over your chest to the start."
-                    ),
-                    benefits = listOf(
-                        "Works both the chest and the latissimus dorsi (back muscles).",
-                        "Helps expand the rib cage and improves flexibility."
-                    )
-                )
-            }
-
             item {
                 Button(
                     onClick = {
                         val duration = ((System.currentTimeMillis() - startTime) / 1000).toInt()
-                        userViewModel.logWorkout("chest", "medium", duration) {
-                            navController.popBackStack()
+                        
+                        // Calculate Totals for Progress Report
+                        val totalActualReps = exerciseLogs.values.sumOf { it.reps_completed }
+                        val totalActualSets = exerciseLogs.values.sumOf { it.sets_completed }
+                        
+                        // Calculate Planned Totals (for progress calculation in ViewModel)
+                        var totalPlannedReps = 0
+                        exercises.forEach { ex ->
+                            val s = ex.sets ?: 3
+                            val r = try { ex.reps?.split("-")?.first()?.toInt() ?: 12 } catch(e: Exception) { 12 }
+                            totalPlannedReps += (s * r)
                         }
+
+                        // Set Current Result in ViewModel for Summary Screen
+                        userViewModel.setCurrentWorkoutResult(
+                            WorkoutResult(
+                                muscleGroup = "chest",
+                                intensity = "intermediate",
+                                totalVolume = 0,
+                                totalReps = totalActualReps,
+                                totalSets = totalActualSets,
+                                totalTimeSeconds = duration,
+                                exerciseLogs = exerciseLogs.values.toList()
+                            )
+                        )
+
+                        // Redirect to summary screen
+                        navController.navigate("workout_summary/chest")
                     },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(16.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE0FF63))
                 ) {
-                    Text(text = "Finish Workout", color = Color.Black)
+                    val logsCount = exerciseLogs.size
+                    Text(
+                        text = if (logsCount > 0) "Finish $logsCount Exercises" else "Finish Workout",
+                        color = Color.Black,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }
@@ -179,6 +187,9 @@ fun IntermediateChestWorkoutsScreen(navController: NavController) {
 @Composable
 fun IntermediateChestWorkoutsScreenPreview() {
     SweatzoneTheme {
-        IntermediateChestWorkoutsScreen(navController = rememberNavController())
+        IntermediateChestWorkoutsScreen(
+            navController = rememberNavController(),
+            userViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+        )
     }
 }

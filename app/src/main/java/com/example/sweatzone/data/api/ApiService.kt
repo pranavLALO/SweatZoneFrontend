@@ -26,6 +26,24 @@ interface ApiService {
         @Body request: LoginRequest
     ): Response<AuthResponse>
 
+    @POST("auth/forgot_password.php")
+    @Headers("Content-Type: application/json")
+    suspend fun forgotPassword(
+        @Body request: ForgotPasswordRequest
+    ): Response<BasicResponse>
+
+    @POST("auth/verify_otp.php")
+    @Headers("Content-Type: application/json")
+    suspend fun verifyOtp(
+        @Body request: VerifyOtpRequest
+    ): Response<BasicResponse>
+
+    @POST("auth/reset_password.php")
+    @Headers("Content-Type: application/json")
+    suspend fun resetPassword(
+        @Body request: ResetPasswordRequest
+    ): Response<BasicResponse>
+
     // -------------------------
     // BODY PROFILE (Height, Weight, Gender)
     // -------------------------
@@ -91,4 +109,47 @@ interface ApiService {
         @Query("user_id") userId: Int,
         @Query("exercise_name") exerciseName: String? = null
     ): Response<TopScoresResponse>
+
+    // -------------------------
+    // WORKOUT DATA
+    // -------------------------
+    @GET("workouts/get_last_workout.php")
+    suspend fun getLastWorkout(
+        @Query("muscle_group") muscleGroup: String
+    ): Response<LastWorkoutResponse>
+
+    @GET("workouts/get_workout_history.php")
+    suspend fun getWorkoutHistory(): Response<WorkoutHistoryResponse>
+
+    @GET("get_workout_exercises.php")
+    suspend fun getWorkoutExercises(
+        @Query("target_muscle") targetMuscle: String,
+        @Query("difficulty") difficulty: String
+    ): Response<WorkoutExercisesResponse>
+
+    @GET("workouts/get_library.php")
+    suspend fun getLibrary(): Response<LibraryResponse>
+
+    @POST("workouts/save_custom_routine.php")
+    @Headers("Content-Type: application/json")
+    suspend fun saveCustomRoutine(
+        @Body request: SaveCustomRoutineRequest
+    ): Response<BasicResponse>
+
+    @GET("workouts/get_custom_routines.php")
+    suspend fun getCustomRoutines(): Response<CustomRoutinesResponse>
+
+    @GET("workouts/get_custom_routine_by_id.php")
+    suspend fun getCustomRoutineById(
+        @Query("routine_id") routineId: Int
+    ): Response<SingleCustomRoutineResponse>
+
+    @POST("workouts/update_custom_routine.php")
+    @Headers("Content-Type: application/json")
+    suspend fun updateCustomRoutine(
+        @Body request: UpdateCustomRoutineRequest
+    ): Response<BasicResponse>
+
+    @GET("workouts/get_user_badges.php")
+    suspend fun getUserBadges(): Response<BadgeResponse>
 }

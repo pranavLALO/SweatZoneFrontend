@@ -138,9 +138,13 @@ fun LoginScreen(
 
             Box(modifier = Modifier.fillMaxWidth()) {
                 ClickableText(
-                    text = AnnotatedString(""),
-                    onClick = { },
-                    style = TextStyle(color = Color.Gray, textAlign = TextAlign.End),
+                    text = AnnotatedString("Forgot Password?"),
+                    onClick = { navController.navigate("forgot_password") },
+                    style = TextStyle(
+                        color = Color(0xFFE0FF63), 
+                        textAlign = TextAlign.End,
+                        fontWeight = FontWeight.Bold
+                    ),
                     modifier = Modifier.align(Alignment.CenterEnd)
                 )
             }

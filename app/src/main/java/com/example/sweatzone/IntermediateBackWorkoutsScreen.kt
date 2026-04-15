@@ -1,6 +1,11 @@
 package com.example.sweatzone
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -22,10 +27,36 @@ import com.example.sweatzone.ui.components.ExerciseItem
 import com.example.sweatzone.ui.theme.SweatzoneTheme
 
 @Composable
-fun IntermediateBackWorkoutsScreen(navController: NavController) {
-    val userViewModel: UserViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+fun IntermediateBackWorkoutsScreen(navController: NavController, userViewModel: UserViewModel) {
     val pinkBg = Color(0xFFFFF0F5)
     val startTime = androidx.compose.runtime.remember { System.currentTimeMillis() }
+
+    var exercises by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<List<com.example.sweatzone.data.dto.WorkoutExerciseDto>>(emptyList()) }
+    var isLoading by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(true) }
+    var errorMessage by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<String?>(null) }
+
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        try {
+            val response = com.example.sweatzone.data.api.RetrofitClient.api.getWorkoutExercises("back", "intermediate")
+            if (response.isSuccessful) {
+                val body = response.body()
+                if (body != null && body.status) {
+                    exercises = body.data ?: emptyList()
+                } else {
+                    errorMessage = body?.message ?: "Unknown API error"
+                }
+            } else {
+                errorMessage = "HTTP Error: ${response.code()}"
+            }
+        } catch (e: Exception) {
+            errorMessage = e.message ?: "Failed to connect to backend"
+        } finally {
+            isLoading = false
+        }
+    }
+
+
+    val exerciseLogs = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateMapOf<Int, com.example.sweatzone.data.dto.ExerciseLog>() }
 
     Scaffold(
         bottomBar = {
@@ -66,110 +97,82 @@ fun IntermediateBackWorkoutsScreen(navController: NavController) {
                 }
             }
 
-            // Exercises
-            item {
-                ExerciseItem(
-                    title = "Barbell Rows",
-                    videoResId = R.raw.barbell_rows_video, // Ensure this video exists
-                    instructions = listOf(
-                        "Stand with your feet shoulder-width apart.",
-                        "Bend at your hips and knees and grab a barbell with an overhand grip.",
-                        "Pull the barbell to your upper waist, squeezing your back muscles.",
-                        "Slowly lower the barbell back to the starting position."
-                    ),
-                    benefits = listOf(
-                        "Builds a thick, strong back.",
-                        "Excellent compound movement for overall upper body strength."
+            if (isLoading) {
+                item {
+                    Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = Color.Black)
+                    }
+                }
+            } else if (errorMessage != null) {
+                item {
+                    Text(
+                        text = "Error: $errorMessage",
+                        color = Color.Red,
+                        modifier = Modifier.padding(16.dp)
                     )
-                )
-            }
-
-            // 👇 ADDED MISSING EXERCISES BELOW
-            item {
-                ExerciseItem(
-                    title = "Pull-Ups",
-                    videoResId = R.raw.pullups_video, // Replace with pull_ups_video
-                    instructions = listOf(
-                        "Grab the pull-up bar with a grip slightly wider than shoulder-width.",
-                        "Hang with your arms fully extended, engaging your core.",
-                        "Pull your body up until your chin is over the bar.",
-                        "Focus on squeezing your back and lats.",
-                        "Lower yourself back down with control."
-                    ),
-                    benefits = listOf(
-                        "The ultimate back-width builder.",
-                        "Develops lats, biceps, and grip strength."
+                }
+            } else {
+                items(exercises) { exercise ->
+                    ExerciseItem(
+                        trackingMode = "intermediate",
+                        title = exercise.title,
+                        videoUrl = "${com.example.sweatzone.data.api.RetrofitClient.BASE_URL}videos/${exercise.video_filename}",
+                        instructions = exercise.instructions,
+                        benefits = exercise.benefits,
+                        plannedSets = exercise.sets ?: 3,
+                        plannedReps = try { exercise.reps?.split("-")?.first()?.toInt() ?: 12 } catch(e: Exception) { 12 },
+                        onDataChanged = { s, r ->
+                            exerciseLogs[exercise.id] = com.example.sweatzone.data.dto.ExerciseLog(
+                                exercise_title = exercise.title,
+                                sets_completed = s,
+                                reps_completed = r,
+                                weight_kg = 0,
+                                time_used_seconds = 0
+                            )
+                        }
                     )
-                )
+                }
             }
-
-            item {
-                ExerciseItem(
-                    title = "T-Bar Row",
-                    videoResId = R.raw.tbar_row_video, // Replace with t_bar_row_video
-                    instructions = listOf(
-                        "Stand over a loaded T-bar, feet shoulder-width apart.",
-                        "Bend at the hips and grab the handles with a neutral grip.",
-                        "Keeping your back straight, pull the weight up towards your chest.",
-                        "Squeeze your mid-back muscles at the top of the movement."
-                    ),
-                    benefits = listOf(
-                        "Targets the middle back for thickness and density.",
-                        "Allows for heavy weight with a stable position."
-                    )
-                )
-            }
-
-            item {
-                ExerciseItem(
-                    title = "Seated Cable Row",
-                    videoResId = R.raw.cable_crossover_video, // Replace with cable_row_video
-                    instructions = listOf(
-                        "Sit at a cable row machine with your feet on the platform.",
-                        "Grab the handle with a neutral grip, keeping your back straight.",
-                        "Pull the handle towards your lower abdomen.",
-                        "Squeeze your shoulder blades together and pause briefly.",
-                        "Slowly extend your arms back to the starting position."
-                    ),
-                    benefits = listOf(
-                        "Excellent for developing mid-back thickness.",
-                        "Provides constant tension and a controlled motion."
-                    )
-                )
-            }
-
-            item {
-                ExerciseItem(
-                    title = "Single-Arm Dumbbell Row",
-                    videoResId = R.raw.dumbbell_row_video, // Replace with dumbbell_row_video
-                    instructions = listOf(
-                        "Place one knee and hand on a flat bench for support.",
-                        "Hold a dumbbell in the opposite hand with your arm extended.",
-                        "Pull the dumbbell up to the side of your chest, keeping your back straight.",
-                        "Focus on pulling with your back muscles, not your arm.",
-                        "Lower the dumbbell slowly and repeat."
-                    ),
-                    benefits = listOf(
-                        "Corrects strength imbalances between the left and right side.",
-                        "Allows for a greater range of motion and deeper muscle contraction."
-                    )
-                )
-            }
-
             item {
                 Button(
                     onClick = {
                         val duration = ((System.currentTimeMillis() - startTime) / 1000).toInt()
-                        userViewModel.logWorkout("back", "medium", duration) {
-                            navController.popBackStack()
+                        
+                        val totalActualReps = exerciseLogs.values.sumOf { it.reps_completed }
+                        val totalActualSets = exerciseLogs.values.sumOf { it.sets_completed }
+                        
+                        var totalPlannedReps = 0
+                        exercises.forEach { ex ->
+                            val s = ex.sets ?: 3
+                            val r = try { ex.reps?.split("-")?.first()?.toInt() ?: 12 } catch(e: Exception) { 12 }
+                            totalPlannedReps += (s * r)
                         }
+
+                        userViewModel.setCurrentWorkoutResult(
+                            WorkoutResult(
+                                muscleGroup = "back",
+                                intensity = "intermediate",
+                                totalVolume = 0,
+                                totalReps = totalActualReps,
+                                totalSets = totalActualSets,
+                                totalTimeSeconds = duration,
+                                exerciseLogs = exerciseLogs.values.toList()
+                            )
+                        )
+
+                        navController.navigate("workout_summary/back")
                     },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(16.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE0FF63))
                 ) {
-                    Text(text = "Finish Workout", color = Color.Black)
+                    val logsCount = exerciseLogs.size
+                    Text(
+                        text = if (logsCount > 0) "Finish $logsCount Exercises" else "Finish Workout",
+                        color = Color.Black,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }
@@ -180,6 +183,9 @@ fun IntermediateBackWorkoutsScreen(navController: NavController) {
 @Composable
 fun IntermediateBackWorkoutsScreenPreview() {
     SweatzoneTheme {
-        IntermediateBackWorkoutsScreen(navController = rememberNavController())
+        IntermediateBackWorkoutsScreen(
+            navController = rememberNavController(),
+            userViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+        )
     }
 }

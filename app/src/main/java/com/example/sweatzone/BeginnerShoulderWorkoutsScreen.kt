@@ -4,25 +4,58 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.sweatzone.data.api.RetrofitClient
+import com.example.sweatzone.data.dto.WorkoutExerciseDto
 import com.example.sweatzone.ui.components.AppBottomNavigationBar
 import com.example.sweatzone.ui.components.ExerciseItem
+import kotlinx.coroutines.launch
 
 @Composable
 fun BeginnerShoulderWorkoutsScreen(navController: NavController) {
     val userViewModel: UserViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
     val lavenderBg = Color(0xFFF3E5F5)
-    val startTime = androidx.compose.runtime.remember { System.currentTimeMillis() }
+    val startTime = remember { System.currentTimeMillis() }
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    
+    // State to hold fetched workouts
+    var exercises by remember { mutableStateOf<List<WorkoutExerciseDto>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(true) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    // Fetch dynamic content on load
+    LaunchedEffect(Unit) {
+        try {
+            val response = RetrofitClient.api.getWorkoutExercises("shoulder", "beginner")
+            if (response.isSuccessful) {
+                val body = response.body()
+                if (body != null && body.status) {
+                    exercises = body.data ?: emptyList()
+                } else {
+                    errorMessage = body?.message ?: "Unknown API error"
+                }
+            } else {
+                errorMessage = "HTTP Error: ${response.code()}"
+            }
+        } catch (e: Exception) {
+            errorMessage = e.message ?: "Failed to connect to backend"
+        } finally {
+            isLoading = false
+        }
+    }
 
     Scaffold(
         bottomBar = {
@@ -59,50 +92,30 @@ fun BeginnerShoulderWorkoutsScreen(navController: NavController) {
                 }
             }
 
-            // Exercise Items
-            item { 
-                ExerciseItem(
-                    title = "Dumbbell Shoulder Press",
-                    videoResId = R.raw.shoulder_press_video,
-                    instructions = listOf("Sit on a bench with back support.", "Hold dumbbells at shoulder height.", "Press weights up until arms are extended.", "Lower back to start."),
-                    benefits = listOf("Targets anterior and lateral deltoids.", "Engages triceps and upper chest.", "Improves overhead stability.")
-                )
-            }
-
-            item { 
-                ExerciseItem(
-                    title = "Front Raises",
-                    videoResId = R.raw.front_raises_video,
-                    instructions = listOf("Stand with dumbbells in front of thighs.", "Lift weights to shoulder height.", "Lower slowly."),
-                    benefits = listOf("Isolates anterior deltoid.", "Improves shoulder flexion.", "Strengthens upper chest.")
-                )
-            }
-
-            item { 
-                ExerciseItem(
-                    title = "Lateral Raises",
-                    videoResId = R.raw.lateral_raises_video,
-                    instructions = listOf("Stand with dumbbells at sides.", "Raise arms out to sides until shoulder height.", "Lower slowly."),
-                    benefits = listOf("Isolates lateral deltoid.", "Builds shoulder width.", "Improves shoulder stability.")
-                )
-            }
-
-            item { 
-                ExerciseItem(
-                    title = "Seated Arnold Press",
-                    videoResId = R.raw.arnold_press_video,
-                    instructions = listOf("Start with dumbbells in front of chest, palms facing you.", "Press up while rotating palms forward.", "Reverse motion on way down."),
-                    benefits = listOf("Targets all three deltoid heads.", "Increases range of motion.", "Engages stabilizer muscles.")
-                )
-            }
-
-            item { 
-                ExerciseItem(
-                    title = "Face Pulls (rope)",
-                    videoResId = R.raw.face_pulls_video,
-                    instructions = listOf("Attach rope to high pulley.", "Pull rope towards face, separating hands.", "Squeeze rear delts."),
-                    benefits = listOf("Targets rear deltoids and rotator cuff.", "Improves posture.", "Balances shoulder strength.")
-                )
+            if (isLoading) {
+                item {
+                    Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = Color.Black)
+                    }
+                }
+            } else if (errorMessage != null) {
+                item {
+                    Text(
+                        text = "Error: $errorMessage",
+                        color = Color.Red,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+            } else {
+                // Render exercises dynamically from DB
+                items(exercises) { exercise ->
+                    ExerciseItem(
+                        title = exercise.title,
+                        videoUrl = "${RetrofitClient.BASE_URL}videos/${exercise.video_filename}",
+                        instructions = exercise.instructions,
+                        benefits = exercise.benefits
+                    )
+                }
             }
 
             item {

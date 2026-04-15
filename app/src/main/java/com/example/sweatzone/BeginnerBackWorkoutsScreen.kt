@@ -4,12 +4,14 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -17,16 +19,46 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.example.sweatzone.data.api.RetrofitClient
+import com.example.sweatzone.data.dto.WorkoutExerciseDto
 import com.example.sweatzone.ui.components.AppBottomNavigationBar
 import com.example.sweatzone.ui.components.ExerciseItem
 import com.example.sweatzone.ui.theme.SweatzoneTheme
+import kotlinx.coroutines.launch
 
 @Composable
 fun BeginnerBackWorkoutsScreen(navController: NavController) {
     val userViewModel: UserViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
-    val context = androidx.compose.ui.platform.LocalContext.current
-    val startTime = androidx.compose.runtime.remember { System.currentTimeMillis() }
+    val context = LocalContext.current
+    val startTime = remember { System.currentTimeMillis() }
     val pinkBg = Color(0xFFFFF0F5)
+    val coroutineScope = rememberCoroutineScope()
+    
+    // State to hold fetched workouts
+    var exercises by remember { mutableStateOf<List<WorkoutExerciseDto>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(true) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    // Fetch dynamic content on load
+    LaunchedEffect(Unit) {
+        try {
+            val response = RetrofitClient.api.getWorkoutExercises("back", "beginner")
+            if (response.isSuccessful) {
+                val body = response.body()
+                if (body != null && body.status) {
+                    exercises = body.data ?: emptyList()
+                } else {
+                    errorMessage = body?.message ?: "Unknown API error"
+                }
+            } else {
+                errorMessage = "HTTP Error: ${response.code()}"
+            }
+        } catch (e: Exception) {
+            errorMessage = e.message ?: "Failed to connect to backend"
+        } finally {
+            isLoading = false
+        }
+    }
 
     Scaffold(
         bottomBar = {
@@ -63,56 +95,29 @@ fun BeginnerBackWorkoutsScreen(navController: NavController) {
                 }
             }
 
-            // Exercises
-            item {
-                ExerciseItem(
-                    title = "Pull-ups (Assisted)",
-                    videoResId = R.raw.pullups_video, // Ensure this video exists in res/raw
-                    instructions = listOf(
-                        "Use an assisted pull-up machine or a resistance band.",
-                        "Grasp the bar with a wide overhand grip.",
-                        "Pull your body up until your chin is over the bar.",
-                        "Slowly lower yourself back to the starting position."
-                    ),
-                    benefits = listOf(
-                        "Builds a wide back.",
-                        "Strengthens biceps and grip."
+            if (isLoading) {
+                item {
+                    Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = Color.Black)
+                    }
+                }
+            } else if (errorMessage != null) {
+                item {
+                    Text(
+                        text = "Error: $errorMessage",
+                        color = Color.Red,
+                        modifier = Modifier.padding(16.dp)
                     )
-                )
-            }
-
-            item {
-                ExerciseItem(
-                    title = "Lat Pulldowns",
-                    videoResId = R.raw.lat_pulldowns_video, // Ensure this video exists in res/raw
-                    instructions = listOf(
-                        "Sit at a lat pulldown machine and secure your knees.",
-                        "Grasp the bar with a wide grip.",
-                        "Pull the bar down to your chest, squeezing your back muscles.",
-                        "Slowly return the bar to the starting position."
-                    ),
-                    benefits = listOf(
-                        "Excellent for targeting the latissimus dorsi.",
-                        "Good for beginners to build back strength."
+                }
+            } else {
+                items(exercises) { exercise ->
+                    ExerciseItem(
+                        title = exercise.title,
+                        videoUrl = "${RetrofitClient.BASE_URL}videos/${exercise.video_filename}",
+                        instructions = exercise.instructions,
+                        benefits = exercise.benefits
                     )
-                )
-            }
-
-            item {
-                ExerciseItem(
-                    title = "Dumbbell Rows",
-                    videoResId = R.raw.dumbbell_rows_video, // Ensure this video exists in res/raw
-                    instructions = listOf(
-                        "Place one knee and hand on a bench.",
-                        "Hold a dumbbell in the opposite hand with your arm extended.",
-                        "Pull the dumbbell up to your chest, keeping your back straight.",
-                        "Lower the dumbbell slowly."
-                    ),
-                    benefits = listOf(
-                        "Works each side of the back independently.",
-                        "Improves core stability."
-                    )
-                )
+                }
             }
 
             item {

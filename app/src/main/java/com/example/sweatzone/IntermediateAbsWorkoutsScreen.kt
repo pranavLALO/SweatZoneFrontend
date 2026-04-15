@@ -1,6 +1,11 @@
 package com.example.sweatzone
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -22,10 +27,36 @@ import com.example.sweatzone.ui.components.ExerciseItem
 import com.example.sweatzone.ui.theme.SweatzoneTheme
 
 @Composable
-fun IntermediateAbsWorkoutsScreen(navController: NavController) {
-    val userViewModel: UserViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+fun IntermediateAbsWorkoutsScreen(navController: NavController, userViewModel: UserViewModel) {
     val pinkBg = Color(0xFFFFF0F5)
     val startTime = androidx.compose.runtime.remember { System.currentTimeMillis() }
+
+    var exercises by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<List<com.example.sweatzone.data.dto.WorkoutExerciseDto>>(emptyList()) }
+    var isLoading by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(true) }
+    var errorMessage by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<String?>(null) }
+
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        try {
+            val response = com.example.sweatzone.data.api.RetrofitClient.api.getWorkoutExercises("abs", "intermediate")
+            if (response.isSuccessful) {
+                val body = response.body()
+                if (body != null && body.status) {
+                    exercises = body.data ?: emptyList()
+                } else {
+                    errorMessage = body?.message ?: "Unknown API error"
+                }
+            } else {
+                errorMessage = "HTTP Error: ${response.code()}"
+            }
+        } catch (e: Exception) {
+            errorMessage = e.message ?: "Failed to connect to backend"
+        } finally {
+            isLoading = false
+        }
+    }
+
+
+    val exerciseLogs = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateMapOf<Int, com.example.sweatzone.data.dto.ExerciseLog>() }
 
     Scaffold(
         bottomBar = {
@@ -66,109 +97,82 @@ fun IntermediateAbsWorkoutsScreen(navController: NavController) {
                 }
             }
 
-            // Exercises
-            item {
-                ExerciseItem(
-                    title = "Hanging Knee Raises",
-                    videoResId = R.raw.hanging_leg_raises_video, // Ensure this video exists
-                    instructions = listOf(
-                        "Hang from a pull-up bar with an overhand grip.",
-                        "Keeping your legs straight, raise them until they are parallel to the floor.",
-                        "Slowly lower your legs back down."
-                    ),
-                    benefits = listOf(
-                        "Excellent for lower abs and grip strength.",
-                        "Decompresses the spine."
+            if (isLoading) {
+                item {
+                    Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = Color.Black)
+                    }
+                }
+            } else if (errorMessage != null) {
+                item {
+                    Text(
+                        text = "Error: $errorMessage",
+                        color = Color.Red,
+                        modifier = Modifier.padding(16.dp)
                     )
-                )
-            }
-
-            // 👇 ADDED MISSING EXERCISES BELOW
-
-            item {
-                ExerciseItem(
-                    title = "Cable Crunches",
-                    videoResId = R.raw.cable_crunches_video, // Replace with cable_crunches_video
-                    instructions = listOf(
-                        "Kneel below a high pulley with a rope attachment.",
-                        "Grasp the rope and pull it down until your hands are next to your face.",
-                        "Flex your hips slightly and allow the weight to hyperextend your lower back.",
-                        "Keeping your hips stationary, crunch your upper body down towards your knees.",
-                        "Squeeze your abs hard at the bottom and slowly return to the start."
-                    ),
-                    benefits = listOf(
-                        "Allows you to add weight for progressive overload on your abs.",
-                        "Provides constant tension throughout the entire movement."
+                }
+            } else {
+                items(exercises) { exercise ->
+                    ExerciseItem(
+                        trackingMode = "intermediate",
+                        title = exercise.title,
+                        videoUrl = "${com.example.sweatzone.data.api.RetrofitClient.BASE_URL}videos/${exercise.video_filename}",
+                        instructions = exercise.instructions,
+                        benefits = exercise.benefits,
+                        plannedSets = exercise.sets ?: 3,
+                        plannedReps = try { exercise.reps?.split("-")?.first()?.toInt() ?: 12 } catch(e: Exception) { 12 },
+                        onDataChanged = { s, r ->
+                            exerciseLogs[exercise.id] = com.example.sweatzone.data.dto.ExerciseLog(
+                                exercise_title = exercise.title,
+                                sets_completed = s,
+                                reps_completed = r,
+                                weight_kg = 0,
+                                time_used_seconds = 0
+                            )
+                        }
                     )
-                )
+                }
             }
-
-            item {
-                ExerciseItem(
-                    title = "Russian Twists",
-                    videoResId = R.raw.russian_twists_video, // Replace with russian_twists_video
-                    instructions = listOf(
-                        "Sit on the floor with your knees bent and feet slightly off the ground.",
-                        "Lean back to a 45-degree angle, keeping your back straight.",
-                        "Hold a weight or clasp your hands together in front of you.",
-                        "Twist your torso from side to side, touching the weight to the floor on each side.",
-                        "Keep your core engaged throughout."
-                    ),
-                    benefits = listOf(
-                        "Targets the obliques for a stronger, more defined waistline.",
-                        "Improves rotational strength and core stability."
-                    )
-                )
-            }
-
-            item {
-                ExerciseItem(
-                    title = "Side Plank",
-                    videoResId = R.raw.side_plank_video, // Replace with side_plank_video
-                    instructions = listOf(
-                        "Lie on your side with your legs straight and stacked.",
-                        "Prop your upper body up on your forearm, ensuring your elbow is directly under your shoulder.",
-                        "Lift your hips off the floor until your body forms a straight line from head to heels.",
-                        "Hold this position for the desired amount of time, then switch sides."
-                    ),
-                    benefits = listOf(
-                        "Strengthens the obliques, lower back, and shoulder stabilizers.",
-                        "Improves anti-rotational core strength."
-                    )
-                )
-            }
-
-            item {
-                ExerciseItem(
-                    title = "Reverse Crunches",
-                    videoResId = R.raw.reverse_crunches_video, // Replace with reverse_crunches_video
-                    instructions = listOf(
-                        "Lie on your back with your hands by your sides or under your lower back for support.",
-                        "Bring your knees towards your chest until they are bent at a 90-degree angle.",
-                        "Using your lower abs, lift your hips off the floor and bring your knees towards your chest.",
-                        "Slowly lower your hips back down to the starting position."
-                    ),
-                    benefits = listOf(
-                        "Effectively targets the often hard-to-reach lower abdominals.",
-                        "Less strain on the neck and spine compared to traditional crunches."
-                    )
-                )
-            }
-
             item {
                 Button(
                     onClick = {
                         val duration = ((System.currentTimeMillis() - startTime) / 1000).toInt()
-                        userViewModel.logWorkout("abs", "medium", duration) {
-                            navController.popBackStack()
+                        
+                        val totalActualReps = exerciseLogs.values.sumOf { it.reps_completed }
+                        val totalActualSets = exerciseLogs.values.sumOf { it.sets_completed }
+                        
+                        var totalPlannedReps = 0
+                        exercises.forEach { ex ->
+                            val s = ex.sets ?: 3
+                            val r = try { ex.reps?.split("-")?.first()?.toInt() ?: 12 } catch(e: Exception) { 12 }
+                            totalPlannedReps += (s * r)
                         }
+
+                        userViewModel.setCurrentWorkoutResult(
+                            WorkoutResult(
+                                muscleGroup = "abs",
+                                intensity = "intermediate",
+                                totalVolume = 0,
+                                totalReps = totalActualReps,
+                                totalSets = totalActualSets,
+                                totalTimeSeconds = duration,
+                                exerciseLogs = exerciseLogs.values.toList()
+                            )
+                        )
+
+                        navController.navigate("workout_summary/abs")
                     },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(16.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE0FF63))
                 ) {
-                    Text(text = "Finish Workout", color = Color.Black)
+                    val logsCount = exerciseLogs.size
+                    Text(
+                        text = if (logsCount > 0) "Finish $logsCount Exercises" else "Finish Workout",
+                        color = Color.Black,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }
@@ -179,7 +183,10 @@ fun IntermediateAbsWorkoutsScreen(navController: NavController) {
 @Composable
 fun IntermediateAbsWorkoutsScreenPreview() {
     SweatzoneTheme {
-        IntermediateAbsWorkoutsScreen(navController = rememberNavController())
+        IntermediateAbsWorkoutsScreen(
+            navController = rememberNavController(),
+            userViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+        )
     }
 }
 

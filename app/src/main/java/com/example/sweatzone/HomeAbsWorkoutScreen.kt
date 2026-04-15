@@ -57,7 +57,7 @@ fun HomeAbsWorkoutScreen(navController: NavController) {
             item {
                 ExerciseItem(
                     title = "Crunches",
-                    videoResId = R.raw.crunches_video,
+                    videoResId = 0,
                     instructions = listOf(
                         "Lie on your back with your knees bent and feet flat on the floor.",
                         "Place your hands across your chest or behind your head.",
@@ -73,7 +73,7 @@ fun HomeAbsWorkoutScreen(navController: NavController) {
             item {
                 ExerciseItem(
                     title = "Mountain Climbers",
-                    videoResId = R.raw.mountain_climbers_video,
+                    videoResId = 0,
                     instructions = listOf(
                         "Start in a high plank position.",
                         "Quickly bring one knee towards your chest, then return it.",
@@ -88,7 +88,7 @@ fun HomeAbsWorkoutScreen(navController: NavController) {
             item {
                 ExerciseItem(
                     title = "Leg Raises",
-                    videoResId = R.raw.leg_raises_video,
+                    videoResId = 0,
                     instructions = listOf(
                         "Lie on your back with legs straight.",
                         "Raise your legs towards the ceiling until your hips lift off the floor.",
@@ -103,7 +103,7 @@ fun HomeAbsWorkoutScreen(navController: NavController) {
             item {
                 ExerciseItem(
                     title = "Flutter Kicks",
-                    videoResId = R.raw.flutter_kicks_video,
+                    videoResId = 0,
                     instructions = listOf(
                         "Lie on your back, legs straight, hands under your glutes.",
                         "Lift your head and shoulders slightly.",

@@ -57,6 +57,8 @@ fun ProfileScreen(
     }
 
     val profileState = profileViewModel.state.collectAsState().value
+    val workoutHistory by profileViewModel.workoutHistory.collectAsState()
+    
     var selectedPeriod by remember { mutableStateOf("week") }
     var showProgressDetails by remember { mutableStateOf(false) }
     var showSubscriptionDialog by remember { mutableStateOf(false) }
@@ -474,6 +476,101 @@ fun ProfileScreen(
                     Spacer(Modifier.height(24.dp))
                 }
 
+                // --- CUSTOM WORKOUTS (NEW FEATURE) ---
+                val customRoutines by profileViewModel.customRoutines.collectAsState()
+
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "MY CUSTOM WORKOUTS",
+                        color = Color.Gray,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.5.sp
+                    )
+                    TextButton(onClick = { navController.navigate("workout_library") }) {
+                        Text("+ BUILD NEW", color = Color(0xFF6592C0), fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    }
+                }
+
+                if (customRoutines.isNotEmpty()) {
+                    androidx.compose.foundation.lazy.LazyRow(
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        items(customRoutines.size) { index ->
+                            val routine = customRoutines[index]
+                            Card(
+                                modifier = Modifier
+                                    .width(200.dp)
+                                    .clickable { navController.navigate("custom_workout/${routine.id}") },
+                                colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E1E)),
+                                shape = RoundedCornerShape(16.dp)
+                            ) {
+                                Column(modifier = Modifier.padding(16.dp)) {
+                                    Text(
+                                        text = routine.routine_name,
+                                        color = Color(0xFFE0FF63),
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 18.sp,
+                                        maxLines = 1,
+                                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = "${routine.exercises.size} Exercises",
+                                        color = Color.White,
+                                        fontSize = 14.sp
+                                    )
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(Icons.Default.Check, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(16.dp))
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text("Play Now", color = Color.Gray, fontSize = 12.sp)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    Card(
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp).clickable { navController.navigate("workout_library") },
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        shape = RoundedCornerShape(16.dp),
+                        border = androidx.compose.foundation.BorderStroke(2.dp, Color(0xFFE0FF63).copy(alpha = 0.5f))
+                    ) {
+                        Row(modifier = Modifier.padding(16.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
+                            Icon(Icons.Default.FitnessCenter, contentDescription = null, tint = Color(0xFFE0FF63))
+                            Spacer(Modifier.width(8.dp))
+                            Text("Create your first Custom Routine!", fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+
+                // --- RECENT WORKOUTS HISTORY ---
+                if (workoutHistory.isNotEmpty()) {
+                    Text(
+                        text = "RECENT SESSIONS",
+                        color = Color.Gray,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.5.sp,
+                        modifier = Modifier.padding(bottom = 12.dp)
+                    )
+                    
+                    workoutHistory.forEach { historyItem ->
+                        WorkoutHistoryCard(
+                            item = historyItem,
+                            modifier = Modifier.padding(bottom = 16.dp)
+                        )
+                    }
+                    
+                    Spacer(Modifier.height(16.dp))
+                }
+
                 // --- GO PREMIUM BANNER (Simplified) ---
                 Card(
                     modifier = Modifier
@@ -766,5 +863,137 @@ fun SegmentedProgressBar(
                 cornerRadius = androidx.compose.ui.geometry.CornerRadius(height / 2, height / 2)
             )
         }
+    }
+}
+
+@Composable
+fun WorkoutHistoryCard(
+    item: com.example.sweatzone.data.dto.WorkoutHistoryItem,
+    modifier: Modifier = Modifier
+) {
+    val quotes = listOf(
+        "Train insane or remain the same.",
+        "Discipline equals freedom.",
+        "Don't stop when you're tired. Stop when you're done.",
+        "No pain, no gain. Shut up and train.",
+        "Your body can stand almost anything. It's your mind you have to convince.",
+        "Wake up. Work out. Look kick-ass.",
+        "Sore today, strong tomorrow.",
+        "Sweat is just fat crying.",
+        "Excuses don't burn calories.",
+        "Push harder than yesterday if you want a different tomorrow."
+    )
+    val quote = quotes[item.id % quotes.size]
+    val rawDate = item.completed_at
+    val displayDate = if (rawDate.length >= 10) rawDate.substring(0, 10) else rawDate
+
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E1E)),
+        shape = RoundedCornerShape(20.dp),
+        elevation = CardDefaults.cardElevation(4.dp)
+    ) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .background(Color(0xFFE0FF63).copy(alpha = 0.2f), CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.FitnessCenter,
+                            contentDescription = "Workout",
+                            tint = Color(0xFFE0FF63),
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    Spacer(Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = item.muscle_group.replaceFirstChar { it.uppercase() },
+                            color = Color.White,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.ExtraBold
+                        )
+                        Text(
+                            text = displayDate,
+                            color = Color.Gray,
+                            fontSize = 12.sp
+                        )
+                    }
+                }
+                
+                Surface(
+                    color = Color.White.copy(alpha = 0.1f),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    val volume = item.weight_kg * item.completed_reps * item.completed_sets
+                    Text(
+                        text = "$volume kg Vol",
+                        color = Color(0xFFE0FF63),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(20.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                HistoryMiniStat("SETS", "${item.completed_sets}", Color.Cyan)
+                HistoryMiniStat("REPS", "${item.completed_reps}", Color.Magenta)
+                HistoryMiniStat("WEIGHT", "${item.weight_kg} kg", Color(0xFFFF9800))
+                val min = item.duration_seconds / 60
+                val sec = item.duration_seconds % 60
+                HistoryMiniStat("TIME", String.format(java.util.Locale.US, "%02d:%02d", min, sec), Color.Red)
+            }
+            
+            Spacer(Modifier.height(16.dp))
+            Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color.White.copy(alpha = 0.1f)))
+            Spacer(Modifier.height(16.dp))
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ChatBubble,
+                    contentDescription = null,
+                    tint = Color.Gray.copy(alpha = 0.5f),
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = "\"$quote\"",
+                    color = Color.Gray,
+                    fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun HistoryMiniStat(label: String, value: String, dotColor: Color) {
+    Column(horizontalAlignment = Alignment.Start) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(modifier = Modifier.size(6.dp).background(dotColor, CircleShape))
+            Spacer(Modifier.width(4.dp))
+            Text(label, fontSize = 10.sp, color = Color.Gray, fontWeight = FontWeight.Bold)
+        }
+        Spacer(Modifier.height(4.dp))
+        Text(value, fontSize = 16.sp, color = Color.White, fontWeight = FontWeight.Bold)
     }
 }

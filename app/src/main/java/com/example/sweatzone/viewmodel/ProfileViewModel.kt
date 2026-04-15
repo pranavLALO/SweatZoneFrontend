@@ -13,6 +13,12 @@ class ProfileViewModel : ViewModel() {
     private val _state = MutableStateFlow<ProfileState>(ProfileState.Idle)
     val state: StateFlow<ProfileState> = _state
 
+    private val _workoutHistory = MutableStateFlow<List<com.example.sweatzone.data.dto.WorkoutHistoryItem>>(emptyList())
+    val workoutHistory: StateFlow<List<com.example.sweatzone.data.dto.WorkoutHistoryItem>> = _workoutHistory
+
+    private val _customRoutines = MutableStateFlow<List<com.example.sweatzone.data.dto.CustomRoutine>>(emptyList())
+    val customRoutines: StateFlow<List<com.example.sweatzone.data.dto.CustomRoutine>> = _customRoutines
+
     fun loadProfile(userId: Int) {
         viewModelScope.launch {
             _state.value = ProfileState.Loading
@@ -42,6 +48,25 @@ class ProfileViewModel : ViewModel() {
                         com.example.sweatzone.data.local.TokenManager.saveUserGender(profile.gender)
                         com.example.sweatzone.data.local.TokenManager.saveUserGoal(profile.goal)
                         
+                        // Fetch History concurrently for the UI
+                        try {
+                            val historyResponse = RetrofitClient.api.getWorkoutHistory()
+                            if (historyResponse.isSuccessful && historyResponse.body()?.status == true) {
+                                _workoutHistory.value = historyResponse.body()?.data ?: emptyList()
+                            }
+                        } catch (e: Exception) {
+                            // Silently fail history if offline, don't break profile
+                        }
+
+                        // Fetch Custom Routines concurrently
+                        try {
+                            val routineResponse = RetrofitClient.api.getCustomRoutines()
+                            if (routineResponse.isSuccessful && routineResponse.body()?.status == true) {
+                                _customRoutines.value = routineResponse.body()?.data ?: emptyList()
+                            }
+                        } catch (e: Exception) {
+                        }
+
                         _state.value = ProfileState.Success(
                             profile = profile,
                             weeklyStats = stats,

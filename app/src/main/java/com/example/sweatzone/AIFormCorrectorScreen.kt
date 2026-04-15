@@ -312,10 +312,10 @@ fun SampleWorkoutVideo(workout: String) {
     val context = LocalContext.current
 
     val videoRes = when (workout) {
-        "Squat" -> R.raw.squats_video
-        "Push-up" -> R.raw.pushup_video
-        "Plank" -> R.raw.plank_video
-        else -> R.raw.squats_video
+        "Squat" -> 0
+        "Push-up" -> 0
+        "Plank" -> 0
+        else -> 0
     }
 
     val player = remember(videoRes) {

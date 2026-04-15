@@ -4,12 +4,14 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -17,15 +19,46 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.example.sweatzone.data.api.RetrofitClient
+import com.example.sweatzone.data.dto.WorkoutExerciseDto
 import com.example.sweatzone.ui.components.AppBottomNavigationBar
 import com.example.sweatzone.ui.components.ExerciseItem
 import com.example.sweatzone.ui.theme.SweatzoneTheme
+import kotlinx.coroutines.launch
 
 @Composable
 fun BeginnerAbsWorkoutsScreen(navController: NavController) {
     val userViewModel: UserViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
     val pinkBg = Color(0xFFFFF0F5)
-    val startTime = androidx.compose.runtime.remember { System.currentTimeMillis() }
+    val startTime = remember { System.currentTimeMillis() }
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    
+    // State to hold fetched workouts
+    var exercises by remember { mutableStateOf<List<WorkoutExerciseDto>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(true) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    // Fetch dynamic content on load
+    LaunchedEffect(Unit) {
+        try {
+            val response = RetrofitClient.api.getWorkoutExercises("abs", "beginner")
+            if (response.isSuccessful) {
+                val body = response.body()
+                if (body != null && body.status) {
+                    exercises = body.data ?: emptyList()
+                } else {
+                    errorMessage = body?.message ?: "Unknown API error"
+                }
+            } else {
+                errorMessage = "HTTP Error: ${response.code()}"
+            }
+        } catch (e: Exception) {
+            errorMessage = e.message ?: "Failed to connect to backend"
+        } finally {
+            isLoading = false
+        }
+    }
 
     Scaffold(
         bottomBar = {
@@ -62,56 +95,29 @@ fun BeginnerAbsWorkoutsScreen(navController: NavController) {
                 }
             }
 
-            // Exercises
-            item {
-                ExerciseItem(
-                    title = "Crunches",
-                    videoResId = R.raw.crunches_video, // Ensure this video exists in res/raw
-                    instructions = listOf(
-                        "Lie flat on your back, knees bent, feet on the floor.",
-                        "Place hands behind your head or across your chest.",
-                        "Lift your upper body towards your knees, contracting your abs.",
-                        "Slowly lower back down."
-                    ),
-                    benefits = listOf(
-                        "Isolates the rectus abdominis.",
-                        "Improves core strength and stability."
+            if (isLoading) {
+                item {
+                    Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = Color.Black)
+                    }
+                }
+            } else if (errorMessage != null) {
+                item {
+                    Text(
+                        text = "Error: $errorMessage",
+                        color = Color.Red,
+                        modifier = Modifier.padding(16.dp)
                     )
-                )
-            }
-
-            item {
-                ExerciseItem(
-                    title = "Leg Raises",
-                    videoResId = R.raw.leg_raises_video, // Ensure this video exists in res/raw
-                    instructions = listOf(
-                        "Lie on your back with legs straight.",
-                        "Place hands under your glutes for support.",
-                        "Lift your legs towards the ceiling until your hips are off the floor.",
-                        "Slowly lower your legs back down without touching the floor."
-                    ),
-                    benefits = listOf(
-                        "Targets the lower abdominal muscles.",
-                        "Enhances hip flexor strength."
+                }
+            } else {
+                items(exercises) { exercise ->
+                    ExerciseItem(
+                        title = exercise.title,
+                        videoUrl = "${RetrofitClient.BASE_URL}videos/${exercise.video_filename}",
+                        instructions = exercise.instructions,
+                        benefits = exercise.benefits
                     )
-                )
-            }
-
-            item {
-                ExerciseItem(
-                    title = "Plank",
-                    videoResId = R.raw.plank_video, // Ensure this video exists in res/raw
-                    instructions = listOf(
-                        "Start in a push-up position on your forearms.",
-                        "Keep your body in a straight line from head to heels.",
-                        "Engage your core and glutes.",
-                        "Hold the position for the desired time."
-                    ),
-                    benefits = listOf(
-                        "Strengthens the entire core.",
-                        "Improves posture and body stability."
-                    )
-                )
+                }
             }
 
             item {

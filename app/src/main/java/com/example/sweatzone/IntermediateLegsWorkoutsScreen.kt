@@ -1,6 +1,11 @@
 package com.example.sweatzone
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -22,10 +27,36 @@ import com.example.sweatzone.ui.components.ExerciseItem
 import com.example.sweatzone.ui.theme.SweatzoneTheme
 
 @Composable
-fun IntermediateLegsWorkoutsScreen(navController: NavController) {
-    val userViewModel: UserViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+fun IntermediateLegsWorkoutsScreen(navController: NavController, userViewModel: UserViewModel) {
     val pinkBg = Color(0xFFFFF0F5)
     val startTime = androidx.compose.runtime.remember { System.currentTimeMillis() }
+
+    var exercises by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<List<com.example.sweatzone.data.dto.WorkoutExerciseDto>>(emptyList()) }
+    var isLoading by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(true) }
+    var errorMessage by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<String?>(null) }
+
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        try {
+            val response = com.example.sweatzone.data.api.RetrofitClient.api.getWorkoutExercises("legs", "intermediate")
+            if (response.isSuccessful) {
+                val body = response.body()
+                if (body != null && body.status) {
+                    exercises = body.data ?: emptyList()
+                } else {
+                    errorMessage = body?.message ?: "Unknown API error"
+                }
+            } else {
+                errorMessage = "HTTP Error: ${response.code()}"
+            }
+        } catch (e: Exception) {
+            errorMessage = e.message ?: "Failed to connect to backend"
+        } finally {
+            isLoading = false
+        }
+    }
+
+
+    val exerciseLogs = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateMapOf<Int, com.example.sweatzone.data.dto.ExerciseLog>() }
 
     Scaffold(
         bottomBar = {
@@ -66,131 +97,82 @@ fun IntermediateLegsWorkoutsScreen(navController: NavController) {
                 }
             }
 
-            // Exercises
-            item {
-                ExerciseItem(
-                    title = "Barbell Squats",
-                    videoResId = R.raw.barbell_squat_video, // Ensure this video exists
-                    instructions = listOf(
-                        "Set a barbell on a rack at shoulder height.",
-                        "Step under the bar and rest it on your upper back.",
-                        "Lift the bar off the rack and take a step back.",
-                        "Squat down until your thighs are parallel to the floor.",
-                        "Drive back up to the starting position."
-                    ),
-                    benefits = listOf(
-                        "The king of leg exercises for overall mass and strength.",
-                        "Engages the entire lower body and core."
+            if (isLoading) {
+                item {
+                    Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = Color.Black)
+                    }
+                }
+            } else if (errorMessage != null) {
+                item {
+                    Text(
+                        text = "Error: $errorMessage",
+                        color = Color.Red,
+                        modifier = Modifier.padding(16.dp)
                     )
-                )
-            }
-
-            // 👇 ADDED MISSING EXERCISES BELOW
-
-            item {
-                ExerciseItem(
-                    title = "Romanian Deadlifts",
-                    videoResId = R.raw.romanian_deadlift_video, // Replace with rdl_video
-                    instructions = listOf(
-                        "Hold a barbell with an overhand grip, hands just outside your thighs.",
-                        "Keeping your legs almost straight (slight knee bend), hinge at your hips.",
-                        "Lower the bar by pushing your hips back, keeping it close to your legs.",
-                        "Go down until you feel a deep stretch in your hamstrings.",
-                        "Return to the start by driving your hips forward and squeezing your glutes."
-                    ),
-                    benefits = listOf(
-                        "Excellent for hamstring and glute development.",
-                        "Improves hip mobility and posterior chain strength."
+                }
+            } else {
+                items(exercises) { exercise ->
+                    ExerciseItem(
+                        trackingMode = "intermediate",
+                        title = exercise.title,
+                        videoUrl = "${com.example.sweatzone.data.api.RetrofitClient.BASE_URL}videos/${exercise.video_filename}",
+                        instructions = exercise.instructions,
+                        benefits = exercise.benefits,
+                        plannedSets = exercise.sets ?: 3,
+                        plannedReps = try { exercise.reps?.split("-")?.first()?.toInt() ?: 12 } catch(e: Exception) { 12 },
+                        onDataChanged = { s, r ->
+                            exerciseLogs[exercise.id] = com.example.sweatzone.data.dto.ExerciseLog(
+                                exercise_title = exercise.title,
+                                sets_completed = s,
+                                reps_completed = r,
+                                weight_kg = 0,
+                                time_used_seconds = 0
+                            )
+                        }
                     )
-                )
+                }
             }
-
-            item {
-                ExerciseItem(
-                    title = "Bulgarian Split Squats",
-                    videoResId = R.raw.bulgarian_split_squat_video, // Replace with split_squat_video
-                    instructions = listOf(
-                        "Place the top of your back foot on a bench behind you.",
-                        "Hold dumbbells in each hand and keep your torso upright.",
-                        "Lower your hips until your front thigh is parallel to the ground.",
-                        "Ensure your front knee does not travel past your toes.",
-                        "Push through your front foot to return to the starting position."
-                    ),
-                    benefits = listOf(
-                        "Great for isolating each leg, correcting imbalances.",
-                        "Builds quad, glute, and hamstring strength."
-                    )
-                )
-            }
-
-            item {
-                ExerciseItem(
-                    title = "Leg Press",
-                    videoResId = R.raw.leg_press_video, // Replace with leg_press_video
-                    instructions = listOf(
-                        "Sit on the leg press machine and place your feet shoulder-width apart on the platform.",
-                        "Push the platform away until your legs are fully extended, but not locked.",
-                        "Slowly lower the weight until your knees are at a 90-degree angle.",
-                        "Press the weight back up to the starting position.",
-                        "Do not let your lower back round off the pad."
-                    ),
-                    benefits = listOf(
-                        "Allows for heavy weight with less stress on the lower back.",
-                        "Effectively targets the quads, glutes, and hamstrings."
-                    )
-                )
-            }
-
-            item {
-                ExerciseItem(
-                    title = "Seated Hamstring Curl",
-                    videoResId = R.raw.hamstring_curl_video, // Replace with hamstring_curl_video
-                    instructions = listOf(
-                        "Sit on the machine and adjust the pads to fit securely.",
-                        "The lower leg pad should rest just above your ankles.",
-                        "Curl your legs down as far as possible, squeezing your hamstrings.",
-                        "Hold the contraction for a moment at the bottom.",
-                        "Slowly return the weight to the starting position."
-                    ),
-                    benefits = listOf(
-                        "Isolates the hamstring muscles for targeted growth.",
-                        "Strengthens the knee joint."
-                    )
-                )
-            }
-
-            item {
-                ExerciseItem(
-                    title = "Standing Calf Raises",
-                    videoResId = R.raw.calf_raises_video, // Replace with calf_raise_video
-                    instructions = listOf(
-                        "Stand on a calf raise machine or a step with the balls of your feet.",
-                        "Let your heels hang off the edge to get a good stretch.",
-                        "Push through the balls of your feet to raise your heels as high as possible.",
-                        "Squeeze your calves at the top.",
-                        "Slowly lower your heels back down past the edge of the step."
-                    ),
-                    benefits = listOf(
-                        "Directly targets the gastrocnemius muscle for calf size.",
-                        "Improves ankle stability and explosive power for running and jumping."
-                    )
-                )
-            }
-
             item {
                 Button(
                     onClick = {
                         val duration = ((System.currentTimeMillis() - startTime) / 1000).toInt()
-                        userViewModel.logWorkout("legs", "medium", duration) {
-                            navController.popBackStack()
+                        
+                        val totalActualReps = exerciseLogs.values.sumOf { it.reps_completed }
+                        val totalActualSets = exerciseLogs.values.sumOf { it.sets_completed }
+                        
+                        var totalPlannedReps = 0
+                        exercises.forEach { ex ->
+                            val s = ex.sets ?: 3
+                            val r = try { ex.reps?.split("-")?.first()?.toInt() ?: 12 } catch(e: Exception) { 12 }
+                            totalPlannedReps += (s * r)
                         }
+
+                        userViewModel.setCurrentWorkoutResult(
+                            WorkoutResult(
+                                muscleGroup = "legs",
+                                intensity = "intermediate",
+                                totalVolume = 0,
+                                totalReps = totalActualReps,
+                                totalSets = totalActualSets,
+                                totalTimeSeconds = duration,
+                                exerciseLogs = exerciseLogs.values.toList()
+                            )
+                        )
+
+                        navController.navigate("workout_summary/legs")
                     },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(16.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE0FF63))
                 ) {
-                    Text(text = "Finish Workout", color = Color.Black)
+                    val logsCount = exerciseLogs.size
+                    Text(
+                        text = if (logsCount > 0) "Finish $logsCount Exercises" else "Finish Workout",
+                        color = Color.Black,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }
@@ -201,6 +183,9 @@ fun IntermediateLegsWorkoutsScreen(navController: NavController) {
 @Composable
 fun IntermediateLegsWorkoutsScreenPreview() {
     SweatzoneTheme {
-        IntermediateLegsWorkoutsScreen(navController = rememberNavController())
+        IntermediateLegsWorkoutsScreen(
+            navController = rememberNavController(),
+            userViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+        )
     }
 }

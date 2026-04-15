@@ -61,42 +61,42 @@ fun StrengthTrainingFemaleScreen(navController: NavController) {
 
             item { ExerciseItem(
                 title = "Goblet Squats",
-                videoResId = R.raw.squats_video,
+                videoResId = 0,
                 instructions = listOf("Hold a weight at chest level.", "Squat down keeping your chest up and back straight.", "Drive back up through your heels."),
                 benefits = listOf("Targets quads and glutes.", "Easier on the back than barbell squats.")
             )}
 
             item { ExerciseItem(
                 title = "Romanian Deadlifts",
-                videoResId = R.raw.dumbbell_rows_video, // Placeholder if deadlift video missing
+                videoResId = 0, // Placeholder if deadlift video missing
                 instructions = listOf("Hold weights in front of thighs.", "Hinge at hips keeping legs slightly bent.", "Lower weights until you feel a stretch in hamstrings.", "Squeeze glutes to return to standing."),
                 benefits = listOf("Strengthens hamstrings and glutes.", "Improves posture.")
             )}
 
             item { ExerciseItem(
                 title = "Glute Bridges",
-                videoResId = R.raw.glute_bridge_video,
+                videoResId = 0,
                 instructions = listOf("Lie on back, knees bent.", "Lift hips until body forms a straight line.", "Squeeze glutes at the top.", "Lower back down."),
                 benefits = listOf("Isolates glutes.", "Builds core stability.")
             )}
 
             item { ExerciseItem(
                 title = "Push-Ups (or Knee Push-Ups)",
-                videoResId = R.raw.knee_pushup_video,
+                videoResId = 0,
                 instructions = listOf("Start in plank or on knees.", "Lower chest to floor.", "Push back up keeping core tight."),
                 benefits = listOf("Upper body strength (chest, shoulders, triceps).", "Core stability.")
             )}
 
             item { ExerciseItem(
                 title = "Dumbbell Rows",
-                videoResId = R.raw.dumbbell_rows_video,
+                videoResId = 0,
                 instructions = listOf("Lean on a bench/chair.", "Pull weight up to hip.", "Lower slowly."),
                 benefits = listOf("Strengthens back muscles.", "Improves posture.")
             )}
 
             item { ExerciseItem(
                 title = "Plank",
-                videoResId = R.raw.plank_video,
+                videoResId = 0,
                 instructions = listOf("Hold push-up position on elbows.", "Keep body straight.", "Hold as long as possible."),
                 benefits = listOf("Total core strength.", "Stability.")
             )}

@@ -70,4 +70,6 @@ sealed class Screen(val route: String) {
 
     object SteveReevesWorkout : Screen("steve_reeves_workout")
     object VideoPlayer : Screen("video_player/{videoResId}")
+    object WorkoutSummary : Screen("workout_summary/{muscleGroup}")
+    object PersonalizedProgress : Screen("personalized_progress")
 }

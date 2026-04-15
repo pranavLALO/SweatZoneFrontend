@@ -10,6 +10,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import com.example.sweatzone.data.dto.ExerciseLog
+import com.example.sweatzone.data.dto.WorkoutExercisesResponse
+
+import com.example.sweatzone.data.dto.WorkoutHistoryItem
+import com.example.sweatzone.data.dto.WorkoutHistoryResponse
 
 /**
  * A ViewModel to hold and manage user-selected data across different screens.
@@ -19,6 +24,41 @@ class UserViewModel : ViewModel() {
 
     private val _uiState = MutableStateFlow(UserSelectionState())
     val uiState: StateFlow<UserSelectionState> = _uiState.asStateFlow()
+
+    // --- WORKOUT HISTORY & PROGRESS ---
+    private val _workoutHistory = MutableStateFlow<List<WorkoutHistoryItem>?>(null)
+    val workoutHistory: StateFlow<List<WorkoutHistoryItem>?> = _workoutHistory.asStateFlow()
+
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+    fun fetchWorkoutHistory() {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                val response = RetrofitClient.api.getWorkoutHistory()
+                if (response.isSuccessful && response.body()?.status == true) {
+                    _workoutHistory.value = response.body()?.data
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    // --- ADVANCED WORKOUT SESSION STATE ---
+    private val _currentWorkoutResult = MutableStateFlow<WorkoutResult?>(null)
+    val currentWorkoutResult: StateFlow<WorkoutResult?> = _currentWorkoutResult.asStateFlow()
+
+    fun setCurrentWorkoutResult(result: WorkoutResult) {
+        _currentWorkoutResult.value = result
+    }
+
+    fun clearCurrentWorkoutResult() {
+        _currentWorkoutResult.value = null
+    }
 
     fun setGoal(goal: String) {
         _uiState.update { currentState ->
@@ -117,20 +157,53 @@ class UserViewModel : ViewModel() {
         }
     }
 
-    fun logWorkout(muscleGroup: String, intensity: String, durationSeconds: Int, onError: (String) -> Unit = {}, onSuccess: () -> Unit) {
+    fun logWorkout(
+        muscleGroup: String,
+        intensity: String,
+        durationSeconds: Int = 0,
+        weightKg: Int = 0,
+        completedSets: Int = 0,
+        targetSets: Int = 3,
+        completedReps: Int = 0,
+        targetReps: Int = 10,
+        timerUsed: Int = 0,
+        exerciseLogs: List<ExerciseLog>? = null,
+        onError: (String) -> Unit = {},
+        onSuccess: () -> Unit
+    ) {
         viewModelScope.launch {
             try {
                 // Calculate progress based on logic:
-                // < 1 min (60s) -> 30%
-                // 4 min (240s) -> 60%
-                // 8 min (480s) -> 80%
-                // 13+ min (780s) -> 90%
-                val progress = when {
-                    durationSeconds < 60 -> 30
-                    durationSeconds < 240 -> 30 // Wait, strict interpretation: <1m=30, 4m means 60. So 1-4m? Assuming 30 until 4m.
-                    durationSeconds < 480 -> 60
-                    durationSeconds < 780 -> 80
-                    else -> 90
+                val progress = if (intensity.lowercase() == "high" || intensity.lowercase() == "advanced") {
+                    // --- ADVANCED INTELLIGENT FORMULA (0-100) ---
+                    // 1. Volume Factor (40%): How much of the planned work was done?
+                    val safeTargetSets = if (targetSets > 0) targetSets else 3
+                    val safeTargetReps = if (targetReps > 0) targetReps else 10
+                    val volumeFactor = (completedSets.toFloat() / safeTargetSets) * (completedReps.toFloat() / safeTargetReps)
+                    
+                    // 2. Intensity Factor (30%): Based on weight used (max 50kg)
+                    val intensityFactor = (weightKg.toFloat() / 50f).coerceIn(0f, 1f)
+                    
+                    // 3. Consistency Factor (30%): Based on 180s timer utilization
+                    val consistencyFactor = (timerUsed.toFloat() / 180f).coerceIn(0f, 1f)
+                    
+                    // Final weighted score
+                    ((volumeFactor * 40) + (intensityFactor * 30) + (consistencyFactor * 30)).toInt().coerceIn(0, 100)
+                } else if (intensity.lowercase() == "medium" || intensity.lowercase() == "intermediate") {
+                    // --- INTERMEDIATE REPS-BASED FORMULA (0-100) ---
+                    val totalPlanned = (targetSets * targetReps).toFloat()
+                    if (totalPlanned > 0) {
+                        ((completedReps.toFloat() / totalPlanned) * 100).toInt().coerceIn(0, 100)
+                    } else {
+                        70 // Default
+                    }
+                } else {
+                    // Standard logic for Beginner
+                    when {
+                        durationSeconds < 300 -> 30
+                        durationSeconds < 600 -> 60
+                        else -> 100
+                    }
                 }
 
                 val response = RetrofitClient.api.logWorkout(
@@ -139,7 +212,12 @@ class UserViewModel : ViewModel() {
                         muscle_group = muscleGroup,
                         intensity = intensity,
                         duration = durationSeconds,
-                        progress = progress
+                        progress = progress,
+                        weight_kg = if (weightKg > 0) weightKg else null,
+                        completed_sets = if (completedSets > 0) completedSets else null,
+                        completed_reps = if (completedReps > 0) completedReps else null,
+                        timer_seconds_used = if (timerUsed > 0) timerUsed else null,
+                        exercise_logs = exerciseLogs
                     )
                 )
                 if (response.isSuccessful && response.body()?.status == true) {
@@ -164,15 +242,73 @@ class UserViewModel : ViewModel() {
         }
     }
 
+    private val _lastWorkout = MutableStateFlow<com.example.sweatzone.data.dto.LastWorkoutResponse?>(null)
+    val lastWorkout: StateFlow<com.example.sweatzone.data.dto.LastWorkoutResponse?> = _lastWorkout.asStateFlow()
+
+    fun fetchLastWorkout(muscleGroup: String) {
+        viewModelScope.launch {
+            try {
+                val response = RetrofitClient.api.getLastWorkout(muscleGroup)
+                if (response.isSuccessful) {
+                    _lastWorkout.value = response.body()
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    // --- CUSTOM ROUTINES & MEDALS ---
+    private val _customRoutines = MutableStateFlow<List<com.example.sweatzone.data.dto.CustomRoutine>>(emptyList())
+    val customRoutines: StateFlow<List<com.example.sweatzone.data.dto.CustomRoutine>> = _customRoutines.asStateFlow()
+
+    private val _userBadges = MutableStateFlow<List<com.example.sweatzone.data.dto.BadgeDto>>(emptyList())
+    val userBadges: StateFlow<List<com.example.sweatzone.data.dto.BadgeDto>> = _userBadges.asStateFlow()
+
+    fun fetchCustomRoutines() {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                val response = RetrofitClient.api.getCustomRoutines()
+                if (response.isSuccessful && response.body()?.status == true) {
+                    _customRoutines.value = response.body()?.data ?: emptyList()
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    fun fetchUserBadges() {
+        viewModelScope.launch {
+            try {
+                val response = RetrofitClient.api.getUserBadges()
+                if (response.isSuccessful && response.body()?.status == true) {
+                    _userBadges.value = response.body()?.data ?: emptyList()
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
 }
 
-/**
- * Represents the user's choices made during the onboarding process.
- */
 data class UserSelectionState(
     val goal: String? = null,
     val gender: String? = null,
     val height: Int? = null,
     val weight: Double? = null,
-    val onboardingComplete: Boolean = false // Flag to check if initial setup is done
+    val onboardingComplete: Boolean = false
+)
+
+data class WorkoutResult(
+    val muscleGroup: String,
+    val intensity: String,
+    val totalVolume: Int,
+    val totalReps: Int,
+    val totalSets: Int,
+    val totalTimeSeconds: Int,
+    val exerciseLogs: List<ExerciseLog>
 )

@@ -4,27 +4,58 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.sweatzone.data.api.RetrofitClient
+import com.example.sweatzone.data.dto.WorkoutExerciseDto
 import com.example.sweatzone.ui.components.AppBottomNavigationBar
-import androidx.compose.ui.platform.LocalContext
 import com.example.sweatzone.ui.components.ExerciseItem
+import kotlinx.coroutines.launch
 
 @Composable
 fun BeginnerChestWorkoutsScreen(navController: NavController) {
     val userViewModel: UserViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
     val context = LocalContext.current
     val lavenderBg = Color(0xFFF3E5F5)
-    val startTime = androidx.compose.runtime.remember { System.currentTimeMillis() }
+    val startTime = remember { System.currentTimeMillis() }
+    val coroutineScope = rememberCoroutineScope()
+    
+    // State to hold fetched workouts
+    var exercises by remember { mutableStateOf<List<WorkoutExerciseDto>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(true) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    // Fetch dynamic content on load
+    LaunchedEffect(Unit) {
+        try {
+            val response = RetrofitClient.api.getWorkoutExercises("chest", "beginner")
+            if (response.isSuccessful) {
+                val body = response.body()
+                if (body != null && body.status) {
+                    exercises = body.data ?: emptyList()
+                } else {
+                    errorMessage = body?.message ?: "Unknown API error"
+                }
+            } else {
+                errorMessage = "HTTP Error: ${response.code()}"
+            }
+        } catch (e: Exception) {
+            errorMessage = e.message ?: "Failed to connect to backend"
+        } finally {
+            isLoading = false
+        }
+    }
 
     Scaffold(
         bottomBar = {
@@ -61,50 +92,30 @@ fun BeginnerChestWorkoutsScreen(navController: NavController) {
                 }
             }
 
-            // Exercise Items - Using the shared ExerciseItem to prevent crashes
-            item { 
-                ExerciseItem(
-                    title = "Push Up",
-                    videoUrl = "http://192.168.118.119/SweatZone/videos/pushup_video.mp4",
-                    instructions = listOf("Get on the floor on all fours.", "Straighten arms and legs.", "Lower chest to floor.", "Push back up."),
-                    benefits = listOf("Strengthens chest.", "Targets core.")
-                )
-            }
-
-            item { 
-                ExerciseItem(
-                    title = "Incline Push Up",
-                    videoUrl = "http://192.168.118.119/SweatZone/videos/incline_pushup_video.mp4",
-                    instructions = listOf("Hands on bench.", "Lower chest to edge.", "Push back up."),
-                    benefits = listOf("Easier on shoulders.", "Targets lower chest.")
-                )
-            }
-
-            item { 
-                ExerciseItem(
-                    title = "Knee Push Up",
-                    videoUrl = "http://192.168.118.119/SweatZone/videos/knee_pushup_video.mp4",
-                    instructions = listOf("Knees on floor.", "Lower chest.", "Push up."),
-                    benefits = listOf("Good for beginners.", "Builds strength.")
-                )
-            }
-
-            item { 
-                ExerciseItem(
-                    title = "Barbell Bench Press",
-                    videoUrl = "http://192.168.118.119/SweatZone/videos/bench_press_video.mp4",
-                    instructions = listOf("Lie on bench.", "Lower bar to chest.", "Press up."),
-                    benefits = listOf("Mass builder.", "Full chest activation.")
-                )
-            }
-
-            item { 
-                ExerciseItem(
-                    title = "Incline Bench Press",
-                    videoUrl = "http://192.168.118.119/SweatZone/videos/incline_bench_video.mp4",
-                    instructions = listOf("Set bench to 30 degrees.", "Press weight up.", "Lower slowly."),
-                    benefits = listOf("Upper chest focus.", "Shoulder strength.")
-                )
+            if (isLoading) {
+                item {
+                    Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = Color.Black)
+                    }
+                }
+            } else if (errorMessage != null) {
+                item {
+                    Text(
+                        text = "Error: $errorMessage",
+                        color = Color.Red,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+            } else {
+                // Render exercises dynamically from DB
+                items(exercises) { exercise ->
+                    ExerciseItem(
+                        title = exercise.title,
+                        videoUrl = "${RetrofitClient.BASE_URL}videos/${exercise.video_filename}",
+                        instructions = exercise.instructions,
+                        benefits = exercise.benefits
+                    )
+                }
             }
 
             item {

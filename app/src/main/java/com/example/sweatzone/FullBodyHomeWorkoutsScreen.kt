@@ -84,14 +84,14 @@ fun FullBodyHomeWorkoutsScreen(navController: NavController) {
                 HomeExerciseItem(
                     title = "Jumping Jacks",
                     details = "Duration: 1 min",
-                    videoResId = R.raw.jumping_jacks_video // Create in res/raw
+                    videoResId = 0 // Create in res/raw
                 )
             }
             item {
                 HomeExerciseItem(
                     title = "High Knees",
                     details = "Duration: 1 min",
-                    videoResId = R.raw.high_knees_video // Create in res/raw
+                    videoResId = 0 // Create in res/raw
                 )
             }
 
@@ -104,35 +104,35 @@ fun FullBodyHomeWorkoutsScreen(navController: NavController) {
                 HomeExerciseItem(
                     title = "Push-ups",
                     details = "3 sets of 10-15 reps",
-                    videoResId = R.raw.pushup_video
+                    videoResId = 0
                 )
             }
             item {
                 HomeExerciseItem(
                     title = "Squats",
                     details = "3 sets of 15-20 reps",
-                    videoResId = R.raw.squats_video
+                    videoResId = 0
                 )
             }
             item {
                 HomeExerciseItem(
                     title = "Plank",
                     details = "3 sets, hold for 30-60 secs",
-                    videoResId = R.raw.plank_video
+                    videoResId = 0
                 )
             }
             item {
                 HomeExerciseItem(
                     title = "Lunges",
                     details = "3 sets of 10-12 reps per leg",
-                    videoResId = R.raw.walking_lunges_video
+                    videoResId = 0
                 )
             }
             item {
                 HomeExerciseItem(
                     title = "Burpees",
                     details = "3 sets of 8-10 reps",
-                    videoResId = R.raw.burpees_video // Create in res/raw
+                    videoResId = 0 // Create in res/raw
                 )
             }
 
@@ -144,14 +144,14 @@ fun FullBodyHomeWorkoutsScreen(navController: NavController) {
                 HomeExerciseItem(
                     title = "Hamstring Stretch",
                     details = "Hold for 30 secs per leg",
-                    videoResId = R.raw.hamstring_stretch_video // Create in res/raw
+                    videoResId = 0 // Create in res/raw
                 )
             }
             item {
                 HomeExerciseItem(
                     title = "Chest Stretch",
                     details = "Hold for 30 secs",
-                    videoResId = R.raw.chest_stretch_video // Create in res/raw
+                    videoResId = 0 // Create in res/raw
                 )
             }
 

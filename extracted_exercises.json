@@ -1,0 +1,40 @@
+[
+  {
+    "target_muscle": "legs",
+    "difficulty": "beginner",
+    "title": "Bodyweight Squats",
+    "video_filename": "squats_video.mp4",
+    "instructions": [
+      "Stand with feet shoulder-width apart, toes pointing slightly outwards.",
+      "Keep your chest up and core engaged. Lower your hips back and down as if sitting in a chair.",
+      "Ensure your knees do not collapse inward; keep them aligned with your toes.",
+      "Pause for a second at the bottom of the squat.",
+      "Push through your heels to return to the standing position, squeezing your glutes at the top."
+    ],
+    "benefits": [
+      "Strengthens your quads, hamstrings, and glutes.",
+      "Improves core strength and stability.",
+      "Increases flexibility in your hips and ankles."
+    ]
+  },
+  {
+    "target_muscle": "arms",
+    "difficulty": "beginner",
+    "title": "Dumbbell Bicep Curls",
+    "video_filename": "bicep_curls_video.mp4",
+    "instructions": [
+      "Stand upright with a dumbbell in each hand, arms fully extended, and palms facing forward.",
+      "Keep your elbows close to your torso at all times.",
+      "Exhale and curl the weights while contracting your biceps.",
+      "Continue to raise the weights until your biceps are fully contracted and the dumbbells are at shoulder level.",
+      "Hold the contracted position for a brief pause as you squeeze your biceps.",
+      "Inhale and slowly begin to lower the dumbbells back to the starting position."
+    ],
+    "benefits": [
+      "Isolates the biceps brachii for maximum muscle growth and definition.",
+      "Improves arm strength and grip strength.",
+      "Allows for a full range of motion compared to barbells.",
+      "Corrects strength imbalances between the left and right arm."
+    ]
+  }
+]

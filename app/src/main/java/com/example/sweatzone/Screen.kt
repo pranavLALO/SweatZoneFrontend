@@ -35,6 +35,7 @@ sealed class Screen(val route: String) {
     object BeginnerWorkouts : Screen("beginner_workouts")
     object IntermediateWorkouts : Screen("intermediate_workouts")
     object AdvanceWorkouts : Screen("advance_workouts") // Added missing route
+    object Warmup : Screen("warmup")
 
     // --- Workout Detail Screens ---
     object BeginnerChestWorkouts : Screen("beginner_chest_workouts")

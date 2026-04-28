@@ -6,7 +6,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 object RetrofitClient {
 
     // Physical Device IP (Host PC IP) - Updated based on your network config
-    const val BASE_URL = "http://10.178.59.119/SweatZone/"
+    const val BASE_URL = "http://10.208.238.119/SweatZone/"
 
     // For Android Emulator: "http://10.0.2.2/SweatZone/"
 

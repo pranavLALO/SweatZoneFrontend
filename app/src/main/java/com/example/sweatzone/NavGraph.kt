@@ -88,6 +88,7 @@ fun NavGraph() {
         composable(Screen.BeginnerWorkouts.route) { BeginnerWorkoutsScreen(navController = navController) }
         composable(Screen.IntermediateWorkouts.route) { IntermediateWorkoutsScreen(navController = navController) }
         composable(Screen.AdvanceWorkouts.route) { AdvanceWorkoutsScreen(navController = navController) }
+        composable(Screen.Warmup.route) { WarmupScreen(navController = navController) }
 
         // --- Home Workout Details ---
         composable(Screen.FullBodyHomeWorkouts.route) { FullBodyHomeWorkoutsScreen(navController = navController) }

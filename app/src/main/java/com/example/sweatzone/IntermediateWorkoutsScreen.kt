@@ -11,6 +11,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -44,6 +47,15 @@ fun IntermediateWorkoutsScreen(navController: NavController) {
                 navController = navController,
                 homeRoute = Screen.IntermediateHome.route,
                 workoutsRoute = Screen.IntermediateWorkouts.route
+            )
+        },
+        floatingActionButton = {
+            ExtendedFloatingActionButton(
+                onClick = { navController.navigate(Screen.Warmup.route) },
+                containerColor = yellowText,
+                contentColor = darkBarColor,
+                icon = { Icon(Icons.Filled.PlayArrow, "Start Warmup") },
+                text = { Text("Start Warmup", fontWeight = FontWeight.Bold) }
             )
         }
     ) { innerPadding ->

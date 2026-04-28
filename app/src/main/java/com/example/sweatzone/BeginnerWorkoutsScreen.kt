@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -41,6 +43,15 @@ fun BeginnerWorkoutsScreen(navController: NavController) {
     Scaffold(
         bottomBar = {
             AppBottomNavigationBar(navController = navController, homeRoute = Screen.BeginnerHome.route)
+        },
+        floatingActionButton = {
+            ExtendedFloatingActionButton(
+                onClick = { navController.navigate(Screen.Warmup.route) },
+                containerColor = yellowText,
+                contentColor = darkBarColor,
+                icon = { Icon(Icons.Filled.PlayArrow, contentDescription = "Start Warmup") },
+                text = { Text("Start Warmup", fontWeight = FontWeight.Bold) }
+            )
         }
     ) { innerPadding ->
         Column(

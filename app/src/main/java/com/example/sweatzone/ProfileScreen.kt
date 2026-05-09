@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Assessment
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -297,6 +298,22 @@ fun ProfileScreen(
                     }
                 }
 
+                Spacer(Modifier.height(24.dp))
+                
+                // 🌟 7-Day Performance Report Button
+                Button(
+                    onClick = { navController.navigate(Screen.WeeklySummary.route) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE0FF63)) // Neon accent
+                ) {
+                    Icon(Icons.Default.Assessment, contentDescription = "Report", tint = Color.Black)
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text("View 7-Day Performance Report", color = Color.Black, fontWeight = FontWeight.ExtraBold, fontSize = 16.sp)
+                }
+
                 Spacer(Modifier.height(32.dp))
 
                 // --- BODY METRICS CARD ---
@@ -525,7 +542,9 @@ fun ProfileScreen(
                                         color = Color.White,
                                         fontSize = 14.sp
                                     )
-                                    Spacer(modifier = Modifier.height(16.dp))
+                                    Spacer(modifier = Modifier.height(24.dp))
+
+                                    // 🟢 Action Cards Section (Workouts & Nutrition)
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         Icon(Icons.Default.Check, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(16.dp))
                                         Spacer(modifier = Modifier.width(4.dp))

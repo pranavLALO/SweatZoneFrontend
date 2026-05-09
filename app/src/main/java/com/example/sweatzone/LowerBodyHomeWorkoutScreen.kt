@@ -67,7 +67,7 @@ fun LowerBodyHomeWorkoutScreen(navController: NavController) {
             item {
                 ExerciseItem(
                     title = "Bodyweight Squat",
-                    videoResId = 0, 
+                    videoUrl = "${com.example.sweatzone.data.api.RetrofitClient.BASE_URL}videos/squats_video.mp4",
                     instructions = listOf(
                         "Stand with your feet shoulder-width apart, toes slightly turned out.",
                         "Lower your hips back and down as if sitting in a chair, keeping your chest up.",
@@ -87,7 +87,7 @@ fun LowerBodyHomeWorkoutScreen(navController: NavController) {
             item {
                 ExerciseItem(
                     title = "Forward Lunges",
-                    videoResId = 0,
+                    videoUrl = "${com.example.sweatzone.data.api.RetrofitClient.BASE_URL}videos/walking_lunges_video.mp4",
                     instructions = listOf(
                         "Stand tall with feet hip-width apart.",
                         "Take a large step forward with one leg and lower your hips until both knees are bent at a 90-degree angle.",
@@ -107,7 +107,7 @@ fun LowerBodyHomeWorkoutScreen(navController: NavController) {
             item {
                 ExerciseItem(
                     title = "Glute Bridge",
-                    videoResId = 0, 
+                    videoUrl = "${com.example.sweatzone.data.api.RetrofitClient.BASE_URL}videos/glute_bridge_video.mp4",
                     instructions = listOf(
                         "Lie on your back with your knees bent and feet flat on the floor.",
                         "Place your arms at your sides with palms facing down.",
@@ -127,7 +127,7 @@ fun LowerBodyHomeWorkoutScreen(navController: NavController) {
             item {
                 ExerciseItem(
                     title = "Plank",
-                    videoResId = 0, 
+                    videoUrl = "${com.example.sweatzone.data.api.RetrofitClient.BASE_URL}videos/plank_video.mp4",
                     instructions = listOf(
                         "Start in a push-up position but with your weight on your forearms instead of your hands.",
                         "Keep your body in a straight line from your head to your heels.",
@@ -146,7 +146,7 @@ fun LowerBodyHomeWorkoutScreen(navController: NavController) {
             item {
                 ExerciseItem(
                     title = "Sumo Squat",
-                    videoResId = 0, 
+                    videoUrl = "${com.example.sweatzone.data.api.RetrofitClient.BASE_URL}videos/sumo_squat_video.mp4",
                     instructions = listOf(
                         "Stand with feet wider than shoulder-width apart, toes pointed out at a 45-degree angle.",
                         "Lower your hips back and down, keeping your chest up and knees tracking over your toes.",
@@ -165,7 +165,7 @@ fun LowerBodyHomeWorkoutScreen(navController: NavController) {
             item {
                 ExerciseItem(
                     title = "Jump Squat",
-                    videoResId = 0,
+                    videoUrl = "${com.example.sweatzone.data.api.RetrofitClient.BASE_URL}videos/jump_squat_video.mp4",
                     instructions = listOf(
                         "Perform a standard squat by lowering your hips back and down.",
                         "Explosively jump up as high as you can, extending your hips, knees, and ankles.",
@@ -184,7 +184,7 @@ fun LowerBodyHomeWorkoutScreen(navController: NavController) {
             item {
                 ExerciseItem(
                     title = "Single-Leg Glute Bridge",
-                    videoResId = 0, 
+                    videoUrl = "${com.example.sweatzone.data.api.RetrofitClient.BASE_URL}videos/single_leg_glute_bridge_video.mp4",
                     instructions = listOf(
                         "Lie on your back with one knee bent and foot flat on the floor.",
                         "Extend the other leg straight up towards the ceiling.",

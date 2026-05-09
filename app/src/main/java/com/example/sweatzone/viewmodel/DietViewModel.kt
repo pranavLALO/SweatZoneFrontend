@@ -14,6 +14,9 @@ class DietViewModel : ViewModel() {
     private val _dietState = MutableStateFlow<DietState>(DietState.Idle)
     val dietState: StateFlow<DietState> = _dietState
 
+    private val _waterGlasses = MutableStateFlow(0)
+    val waterGlasses: StateFlow<Int> = _waterGlasses
+
     fun generateDietPlan(userId: Int, goal: String) {
         viewModelScope.launch {
             _dietState.value = DietState.Loading
@@ -42,6 +45,32 @@ class DietViewModel : ViewModel() {
                 }
             } catch (e: Exception) {
                 _dietState.value = DietState.Error(e.message ?: "Network error")
+            }
+        }
+    }
+
+    fun getWater(userId: Int) {
+        viewModelScope.launch {
+            try {
+                val response = repository.getWater(userId)
+                if (response.isSuccessful && response.body()?.status == true) {
+                    _waterGlasses.value = response.body()?.glasses ?: 0
+                }
+            } catch (e: Exception) {
+                // handle error silently for water
+            }
+        }
+    }
+
+    fun logWater(userId: Int, action: String) {
+        viewModelScope.launch {
+            try {
+                val response = repository.logWater(userId, action)
+                if (response.isSuccessful && response.body()?.status == true) {
+                    _waterGlasses.value = response.body()?.glasses ?: 0
+                }
+            } catch (e: Exception) {
+                // handle error
             }
         }
     }

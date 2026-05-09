@@ -57,7 +57,7 @@ fun HomeAbsWorkoutScreen(navController: NavController) {
             item {
                 ExerciseItem(
                     title = "Crunches",
-                    videoResId = 0,
+                    videoUrl = "${com.example.sweatzone.data.api.RetrofitClient.BASE_URL}videos/crunches_video.mp4",
                     instructions = listOf(
                         "Lie on your back with your knees bent and feet flat on the floor.",
                         "Place your hands across your chest or behind your head.",
@@ -73,7 +73,7 @@ fun HomeAbsWorkoutScreen(navController: NavController) {
             item {
                 ExerciseItem(
                     title = "Mountain Climbers",
-                    videoResId = 0,
+                    videoUrl = "${com.example.sweatzone.data.api.RetrofitClient.BASE_URL}videos/mountain_climbers_video.mp4",
                     instructions = listOf(
                         "Start in a high plank position.",
                         "Quickly bring one knee towards your chest, then return it.",
@@ -88,7 +88,7 @@ fun HomeAbsWorkoutScreen(navController: NavController) {
             item {
                 ExerciseItem(
                     title = "Leg Raises",
-                    videoResId = 0,
+                    videoUrl = "${com.example.sweatzone.data.api.RetrofitClient.BASE_URL}videos/leg_raises_video.mp4",
                     instructions = listOf(
                         "Lie on your back with legs straight.",
                         "Raise your legs towards the ceiling until your hips lift off the floor.",
@@ -103,7 +103,7 @@ fun HomeAbsWorkoutScreen(navController: NavController) {
             item {
                 ExerciseItem(
                     title = "Flutter Kicks",
-                    videoResId = 0,
+                    videoUrl = "${com.example.sweatzone.data.api.RetrofitClient.BASE_URL}videos/flutter_kicks_video.mp4",
                     instructions = listOf(
                         "Lie on your back, legs straight, hands under your glutes.",
                         "Lift your head and shoulders slightly.",

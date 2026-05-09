@@ -89,6 +89,22 @@ interface ApiService {
         @Query("user_id") userId: Int
     ): Response<TodayDietResponse>
 
+    @GET("diet/get_water.php")
+    suspend fun getWater(
+        @Query("user_id") userId: Int
+    ): Response<WaterResponse>
+
+    @POST("diet/log_water.php")
+    @Headers("Content-Type: application/json")
+    suspend fun logWater(
+        @Body request: LogWaterRequest
+    ): Response<WaterResponse>
+
+    @GET("workouts/get_weekly_summary.php")
+    suspend fun getWeeklySummary(
+        @Query("user_id") userId: Int
+    ): Response<com.example.sweatzone.data.dto.WeeklySummaryResponse>
+
     @GET("workouts/stats.php")
     suspend fun getWorkoutStats(
         @Query("period") period: String = "week"

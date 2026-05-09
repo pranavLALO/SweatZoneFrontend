@@ -88,7 +88,7 @@ fun UpperBodyHomeWorkoutScreen(navController: NavController) {
             item {
                 UpperBodyExerciseItem(
                     title = "Push-Ups",
-                    videoResId = 0, // Ensure you have pushup_video.mp4
+                    videoUrl = "${com.example.sweatzone.data.api.RetrofitClient.BASE_URL}videos/pushup_video.mp4", // Ensure you have pushup_video.mp4
                     instructions = listOf(
                         "Stand with your feet shoulder-width apart, chest up, and core engaged.",
                         "Lower your hips back and down as if sitting in a chair, keeping your back straight.",
@@ -109,7 +109,7 @@ fun UpperBodyHomeWorkoutScreen(navController: NavController) {
             item {
                 UpperBodyExerciseItem(
                     title = "Incline Push-Ups",
-                    videoResId = 0, // Ensure you have incline_pushup_video.mp4
+                    videoUrl = "${com.example.sweatzone.data.api.RetrofitClient.BASE_URL}videos/incline_pushup_video.mp4", // Ensure you have incline_pushup_video.mp4
                     instructions = listOf(
                         "Place your hands on an elevated surface like a bench, step, or sturdy chair, slightly wider than shoulder-width apart.",
                         "Step your feet back so your body forms a straight line from head to heels; engage your core and glutes.",
@@ -129,7 +129,7 @@ fun UpperBodyHomeWorkoutScreen(navController: NavController) {
             item {
                 UpperBodyExerciseItem(
                     title = "Pike Push-Ups",
-                    videoResId = 0, // Ensure you have pike_pushup_video.mp4
+                    videoUrl = "${com.example.sweatzone.data.api.RetrofitClient.BASE_URL}videos/pike_pushup_video.mp4", // Ensure you have pike_pushup_video.mp4
                     instructions = listOf(
                         "Start in a downward dog yoga position with your hands shoulder-width apart. Your body should form an inverted V shape.",
                         "Keep your legs straight and heels elevated if necessary. Your weight should be distributed between your hands and feet.",
@@ -149,7 +149,7 @@ fun UpperBodyHomeWorkoutScreen(navController: NavController) {
             item {
                 UpperBodyExerciseItem(
                     title = "Push Up (Weighted)",
-                    videoResId = 0, // Ensure you have weighted_pushup_video.mp4
+                    videoUrl = "${com.example.sweatzone.data.api.RetrofitClient.BASE_URL}videos/weighted_pushup_video.mp4", // Ensure you have weighted_pushup_video.mp4
                     instructions = listOf(
                         "Assume a standard push-up position with hands slightly wider than shoulder-width. Have a partner place a weight plate on your upper back or wear a weighted vest.",
                         "Keep your core tight and body in a straight line from head to heels, avoid sagging hips or arching your back.",
@@ -192,7 +192,8 @@ fun UpperBodyHomeWorkoutScreen(navController: NavController) {
 @Composable
 fun UpperBodyExerciseItem(
     title: String,
-    videoResId: Int,
+    videoResId: Int = 0,
+    videoUrl: String? = null,
     instructions: List<String>,
     benefits: List<String>
 ) {
@@ -228,7 +229,14 @@ fun UpperBodyExerciseItem(
                 val exoPlayer = remember {
                     ExoPlayer.Builder(context).build().apply {
                         try {
-                            if (videoResId != 0) {
+                            if (!videoUrl.isNullOrEmpty()) {
+                                val mediaItem = MediaItem.fromUri(Uri.parse(videoUrl))
+                                setMediaItem(mediaItem)
+                                repeatMode = Player.REPEAT_MODE_ONE // Loops the video
+                                playWhenReady = true
+                                prepare()
+                                volume = 0f // Start muted
+                            } else if (videoResId != 0) {
                                 val videoUri = Uri.parse("android.resource://${context.packageName}/$videoResId")
                                 val mediaItem = MediaItem.fromUri(videoUri)
                                 setMediaItem(mediaItem)

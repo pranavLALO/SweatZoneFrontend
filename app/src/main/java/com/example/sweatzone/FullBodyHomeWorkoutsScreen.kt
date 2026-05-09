@@ -84,14 +84,14 @@ fun FullBodyHomeWorkoutsScreen(navController: NavController) {
                 HomeExerciseItem(
                     title = "Jumping Jacks",
                     details = "Duration: 1 min",
-                    videoResId = 0 // Create in res/raw
+                    videoUrl = "${com.example.sweatzone.data.api.RetrofitClient.BASE_URL}videos/jumping_jacks_video.mp4"
                 )
             }
             item {
                 HomeExerciseItem(
                     title = "High Knees",
                     details = "Duration: 1 min",
-                    videoResId = 0 // Create in res/raw
+                    videoUrl = "${com.example.sweatzone.data.api.RetrofitClient.BASE_URL}videos/high_knees_video.mp4"
                 )
             }
 
@@ -104,35 +104,35 @@ fun FullBodyHomeWorkoutsScreen(navController: NavController) {
                 HomeExerciseItem(
                     title = "Push-ups",
                     details = "3 sets of 10-15 reps",
-                    videoResId = 0
+                    videoUrl = "${com.example.sweatzone.data.api.RetrofitClient.BASE_URL}videos/pushup_video.mp4"
                 )
             }
             item {
                 HomeExerciseItem(
                     title = "Squats",
                     details = "3 sets of 15-20 reps",
-                    videoResId = 0
+                    videoUrl = "${com.example.sweatzone.data.api.RetrofitClient.BASE_URL}videos/squats_video.mp4"
                 )
             }
             item {
                 HomeExerciseItem(
                     title = "Plank",
                     details = "3 sets, hold for 30-60 secs",
-                    videoResId = 0
+                    videoUrl = "${com.example.sweatzone.data.api.RetrofitClient.BASE_URL}videos/plank_video.mp4"
                 )
             }
             item {
                 HomeExerciseItem(
                     title = "Lunges",
                     details = "3 sets of 10-12 reps per leg",
-                    videoResId = 0
+                    videoUrl = "${com.example.sweatzone.data.api.RetrofitClient.BASE_URL}videos/walking_lunges_video.mp4"
                 )
             }
             item {
                 HomeExerciseItem(
                     title = "Burpees",
                     details = "3 sets of 8-10 reps",
-                    videoResId = 0 // Create in res/raw
+                    videoUrl = "${com.example.sweatzone.data.api.RetrofitClient.BASE_URL}videos/burpees_video.mp4"
                 )
             }
 
@@ -144,14 +144,14 @@ fun FullBodyHomeWorkoutsScreen(navController: NavController) {
                 HomeExerciseItem(
                     title = "Hamstring Stretch",
                     details = "Hold for 30 secs per leg",
-                    videoResId = 0 // Create in res/raw
+                    videoUrl = "${com.example.sweatzone.data.api.RetrofitClient.BASE_URL}videos/hamstring_stretch_video.mp4"
                 )
             }
             item {
                 HomeExerciseItem(
                     title = "Chest Stretch",
                     details = "Hold for 30 secs",
-                    videoResId = 0 // Create in res/raw
+                    videoUrl = "${com.example.sweatzone.data.api.RetrofitClient.BASE_URL}videos/chest_stretch_video.mp4"
                 )
             }
 
@@ -196,7 +196,8 @@ private fun WorkoutSectionHeader(title: String) {
 private fun HomeExerciseItem(
     title: String,
     details: String,
-    videoResId: Int
+    videoResId: Int = 0,
+    videoUrl: String? = null
 ) {
     Card(
         modifier = Modifier
@@ -223,7 +224,14 @@ private fun HomeExerciseItem(
                 val context = LocalContext.current
                 val exoPlayer = remember {
                     ExoPlayer.Builder(context).build().apply {
-                        if (videoResId != 0) {
+                        if (!videoUrl.isNullOrEmpty()) {
+                            val mediaItem = MediaItem.fromUri(Uri.parse(videoUrl))
+                            setMediaItem(mediaItem)
+                            repeatMode = Player.REPEAT_MODE_ONE
+                            playWhenReady = true
+                            prepare()
+                            volume = 0f // Muted by default
+                        } else if (videoResId != 0) {
                             val videoUri = Uri.parse("android.resource://${context.packageName}/$videoResId")
                             setMediaItem(MediaItem.fromUri(videoUri))
                             repeatMode = Player.REPEAT_MODE_ONE

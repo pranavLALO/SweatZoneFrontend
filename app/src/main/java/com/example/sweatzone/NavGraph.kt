@@ -124,8 +124,11 @@ fun NavGraph() {
         composable("muscle_soreness") {
             MuscleSorenessScreen(navController = navController)
         }
-        composable("importance_of_rest") {
-            ImportanceOfRestScreen(navController = navController)
+        composable(Screen.ImportanceOfRest.route) {
+            ImportanceOfRestScreen(navController)
+        }
+        composable(Screen.WeeklySummary.route) {
+            WeeklySummaryScreen(navController = navController, userViewModel = userViewModel)
         }
         // Inside NavHost
         composable("nutrition_muscle_gain") {

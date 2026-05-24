@@ -61,79 +61,143 @@ fun WorkoutSummaryScreen(navController: NavController, muscleGroup: String, user
             currentResult?.let { result ->
                 val lastData = lastWorkoutState?.data
 
-                // Main Stats Row
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    if (result.intensity.lowercase() == "intermediate" || result.intensity.lowercase() == "medium") {
-                        // Calculate progress for intermediate
-                        val totalPlanned = result.exerciseLogs.size * 3 * 12 // Default fallback if needed
-                        // Actually, we should probably pass the progress or calculate it here. 
-                        // But we already calculate it in the log session.
-                        // For display, let's just show progress based on reps vs a reasonable target if volume is 0.
-                        SummaryStatCard(
-                            modifier = Modifier.weight(1f),
-                            label = "GOAL COMPLETION",
-                            value = "${(result.totalReps.toFloat() / (result.totalSets * 12).toFloat() * 100).toInt().coerceIn(0, 100)}%",
-                            icon = Icons.Default.CheckCircle,
-                            accentColor = premiumAccent
-                        )
-                    } else {
-                        SummaryStatCard(
-                            modifier = Modifier.weight(1f),
-                            label = "VOLUME",
-                            value = "${result.totalVolume} kg",
-                            icon = Icons.Default.FitnessCenter,
-                            comparison = calculateComparison(result.totalVolume, lastData?.weight_kg ?: 0),
-                            accentColor = premiumAccent
-                        )
-                    }
+                val isBeginner = result.intensity.lowercase() == "beginner" || result.intensity.lowercase() == "easy"
+
+                if (isBeginner) {
+                    // Full-width Duration Card
                     SummaryStatCard(
-                        modifier = Modifier.weight(1f),
-                        label = "DURATION",
+                        modifier = Modifier.fillMaxWidth(),
+                        label = "TIME SPENT ON WORKOUT",
                         value = formatDuration(result.totalTimeSeconds),
                         icon = Icons.Default.Timer,
-                        comparison = calculateComparison(result.totalTimeSeconds, lastData?.duration_seconds ?: 0, inverse = true),
                         accentColor = Color.Cyan
                     )
-                }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
 
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    SummaryStatCard(
-                        modifier = Modifier.weight(1f),
-                        label = "SETS",
-                        value = "${result.totalSets}",
-                        icon = Icons.Default.Layers,
-                        accentColor = Color.Magenta
+                    // Motivational Quote Card
+                    val quotes = remember {
+                        listOf(
+                            "The only bad workout is the one that didn't happen. Great job taking the first step today!",
+                            "Success isn't always about greatness. It's about consistency. You are on the right path!",
+                            "Small daily improvements over time lead to stunning results. Keep going!",
+                            "Your body can stand almost anything. It's your mind that you have to convince.",
+                            "Believe you can and you're halfway there. You did amazing today!",
+                            "Every workout is a step closer to your best self. Keep up the dedication!",
+                            "You don't have to be extreme, just consistent. Proud of your effort today!"
+                        )
+                    }
+                    val quote = remember { quotes.random() }
+
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFF2C2C2C)),
+                        shape = RoundedCornerShape(20.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(20.dp)) {
+                            Icon(
+                                imageVector = Icons.Default.Star,
+                                contentDescription = null,
+                                tint = premiumAccent.copy(alpha = 0.8f),
+                                modifier = Modifier.size(32.dp)
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(
+                                text = "MOTIVATIONAL FOCUS",
+                                color = Color.Gray,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                text = "\"$quote\"",
+                                color = Color.White,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Medium,
+                                fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
+                                lineHeight = 22.sp
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(40.dp))
+                } else {
+                    // Main Stats Row
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                        if (result.intensity.lowercase() == "intermediate" || result.intensity.lowercase() == "medium") {
+                            // Calculate progress for intermediate
+                            val totalPlanned = result.exerciseLogs.size * 3 * 12 // Default fallback if needed
+                            val completionPercent = if (result.totalSets > 0) {
+                                (result.totalReps.toFloat() / (result.totalSets * 12).toFloat() * 100).toInt().coerceIn(0, 100)
+                            } else {
+                                0
+                            }
+                            SummaryStatCard(
+                                modifier = Modifier.weight(1f),
+                                label = "GOAL COMPLETION",
+                                value = "${completionPercent}%",
+                                icon = Icons.Default.CheckCircle,
+                                accentColor = premiumAccent
+                            )
+                        } else {
+                            SummaryStatCard(
+                                modifier = Modifier.weight(1f),
+                                label = "VOLUME",
+                                value = "${result.totalVolume} kg",
+                                icon = Icons.Default.FitnessCenter,
+                                comparison = calculateComparison(result.totalVolume, lastData?.weight_kg ?: 0),
+                                accentColor = premiumAccent
+                            )
+                        }
+                        SummaryStatCard(
+                            modifier = Modifier.weight(1f),
+                            label = "DURATION",
+                            value = formatDuration(result.totalTimeSeconds),
+                            icon = Icons.Default.Timer,
+                            comparison = calculateComparison(result.totalTimeSeconds, lastData?.duration_seconds ?: 0, inverse = true),
+                            accentColor = Color.Cyan
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                        SummaryStatCard(
+                            modifier = Modifier.weight(1f),
+                            label = "SETS",
+                            value = "${result.totalSets}",
+                            icon = Icons.Default.Layers,
+                            accentColor = Color.Magenta
+                        )
+                        SummaryStatCard(
+                            modifier = Modifier.weight(1f),
+                            label = "REPS",
+                            value = "${result.totalReps}",
+                            icon = Icons.Default.Repeat,
+                            accentColor = Color.Yellow
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(32.dp))
+
+                    // Exercise Breakdown
+                    Text(
+                        text = "Exercise Detail",
+                        color = Color.Gray,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.fillMaxWidth()
                     )
-                    SummaryStatCard(
-                        modifier = Modifier.weight(1f),
-                        label = "REPS",
-                        value = "${result.totalReps}",
-                        icon = Icons.Default.Repeat,
-                        accentColor = Color.Yellow
-                    )
+                    
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    result.exerciseLogs.forEach { log ->
+                        ExerciseLogItem(log, cardBg)
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+
+                    Spacer(modifier = Modifier.height(40.dp))
                 }
-
-                Spacer(modifier = Modifier.height(32.dp))
-
-                // Exercise Breakdown
-                Text(
-                    text = "Exercise Detail",
-                    color = Color.Gray,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                
-                Spacer(modifier = Modifier.height(12.dp))
-
-                result.exerciseLogs.forEach { log ->
-                    ExerciseLogItem(log, cardBg)
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
-
-                Spacer(modifier = Modifier.height(40.dp))
 
                 // Action Buttons
                 Button(
@@ -142,14 +206,19 @@ fun WorkoutSummaryScreen(navController: NavController, muscleGroup: String, user
                             muscleGroup = result.muscleGroup,
                             intensity = result.intensity,
                             durationSeconds = result.totalTimeSeconds,
-                            weightKg = result.totalVolume / result.totalSets, // Avg weight
+                            weightKg = if (result.totalSets > 0) result.totalVolume / result.totalSets else 0, // Avg weight safe
                             completedSets = result.totalSets,
                             completedReps = result.totalReps,
                             timerUsed = result.totalTimeSeconds,
                             exerciseLogs = result.exerciseLogs,
                             onSuccess = {
                                 userViewModel.clearCurrentWorkoutResult()
-                                navController.popBackStack(Screen.AdvanceHome.route, false)
+                                val popRoute = when (result.intensity.lowercase()) {
+                                    "beginner", "easy" -> Screen.BeginnerHome.route
+                                    "intermediate", "medium" -> Screen.IntermediateHome.route
+                                    else -> Screen.AdvanceHome.route
+                                }
+                                navController.popBackStack(popRoute, false)
                             }
                         )
                     },
@@ -226,7 +295,9 @@ fun ExerciseLogItem(log: com.example.sweatzone.data.dto.ExerciseLog, bg: Color) 
             Text(text = log.exercise_title, color = Color.White, fontWeight = FontWeight.Bold)
             Text(text = "${log.sets_completed} Sets • ${log.reps_completed} Reps", color = Color.Gray, fontSize = 12.sp)
         }
-        Text(text = "${log.weight_kg} kg", color = Color(0xFFE0FF63), fontWeight = FontWeight.Bold, fontSize = 18.sp)
+        if (log.weight_kg > 0) {
+            Text(text = "${log.weight_kg} kg", color = Color(0xFFE0FF63), fontWeight = FontWeight.Bold, fontSize = 18.sp)
+        }
     }
 }
 

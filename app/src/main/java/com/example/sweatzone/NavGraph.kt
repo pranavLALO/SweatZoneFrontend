@@ -97,12 +97,12 @@ fun NavGraph() {
         composable(Screen.HomeAbsWorkouts.route) { HomeAbsWorkoutScreen(navController = navController) }
 
         // --- Beginner Workout Details ---
-        composable(Screen.BeginnerChestWorkouts.route) { BeginnerChestWorkoutsScreen(navController) }
-        composable(Screen.BeginnerShoulderWorkouts.route) { BeginnerShoulderWorkoutsScreen(navController) }
-        composable(Screen.BeginnerArmsWorkouts.route) { BeginnerArmsWorkoutsScreen(navController) }
-        composable(Screen.BeginnerLegsWorkouts.route) { BeginnerLegsWorkoutsScreen(navController) }
-        composable(Screen.BeginnerAbsWorkouts.route) { BeginnerAbsWorkoutsScreen(navController) }
-        composable(Screen.BeginnerBackWorkouts.route) { BeginnerBackWorkoutsScreen(navController) }
+        composable(Screen.BeginnerChestWorkouts.route) { BeginnerChestWorkoutsScreen(navController, userViewModel) }
+        composable(Screen.BeginnerShoulderWorkouts.route) { BeginnerShoulderWorkoutsScreen(navController, userViewModel) }
+        composable(Screen.BeginnerArmsWorkouts.route) { BeginnerArmsWorkoutsScreen(navController, userViewModel) }
+        composable(Screen.BeginnerLegsWorkouts.route) { BeginnerLegsWorkoutsScreen(navController, userViewModel) }
+        composable(Screen.BeginnerAbsWorkouts.route) { BeginnerAbsWorkoutsScreen(navController, userViewModel) }
+        composable(Screen.BeginnerBackWorkouts.route) { BeginnerBackWorkoutsScreen(navController, userViewModel) }
 
         // --- Intermediate Workout Details ---
         composable(Screen.IntermediateChestWorkouts.route) { IntermediateChestWorkoutsScreen(navController, userViewModel) }
@@ -142,12 +142,12 @@ fun NavGraph() {
 
 
         // --- Advance Workout Details ---
-        composable(Screen.AdvanceChestWorkouts.route) { AdvanceChestWorkoutsScreen(navController) }
-        composable(Screen.AdvanceShoulderWorkouts.route) { AdvanceShoulderWorkoutsScreen(navController) }
-        composable(Screen.AdvanceArmsWorkouts.route) { AdvanceArmsWorkoutsScreen(navController) }
-        composable(Screen.AdvanceLegsWorkouts.route) { AdvanceLegsWorkoutsScreen(navController) }
-        composable(Screen.AdvanceAbsWorkouts.route) { AdvanceAbsWorkoutsScreen(navController) }
-        composable(Screen.AdvanceBackWorkouts.route) { AdvanceBackWorkoutsScreen(navController) }
+        composable(Screen.AdvanceChestWorkouts.route) { AdvanceChestWorkoutsScreen(navController, userViewModel) }
+        composable(Screen.AdvanceShoulderWorkouts.route) { AdvanceShoulderWorkoutsScreen(navController, userViewModel) }
+        composable(Screen.AdvanceArmsWorkouts.route) { AdvanceArmsWorkoutsScreen(navController, userViewModel) }
+        composable(Screen.AdvanceLegsWorkouts.route) { AdvanceLegsWorkoutsScreen(navController, userViewModel) }
+        composable(Screen.AdvanceAbsWorkouts.route) { AdvanceAbsWorkoutsScreen(navController, userViewModel) }
+        composable(Screen.AdvanceBackWorkouts.route) { AdvanceBackWorkoutsScreen(navController, userViewModel) }
 
         // --- Tools Screen ---
         // 👇 THIS IS THE CORRECTED LINE

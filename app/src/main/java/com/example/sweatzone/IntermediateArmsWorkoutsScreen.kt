@@ -35,13 +35,30 @@ fun IntermediateArmsWorkoutsScreen(navController: NavController, userViewModel: 
     var isLoading by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(true) }
     var errorMessage by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<String?>(null) }
 
+    val exerciseLogs = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateMapOf<Int, com.example.sweatzone.data.dto.ExerciseLog>() }
+    val repsState = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateMapOf<Int, Map<Int, Int>>() }
+    val lockedState = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateMapOf<Int, Boolean>() }
+
     androidx.compose.runtime.LaunchedEffect(Unit) {
         try {
             val response = com.example.sweatzone.data.api.RetrofitClient.api.getWorkoutExercises("arms", "intermediate")
             if (response.isSuccessful) {
                 val body = response.body()
                 if (body != null && body.status) {
-                    exercises = body.data ?: emptyList()
+                    val list = body.data ?: emptyList()
+                    exercises = list
+                    list.forEach { exercise ->
+                        val defaultSets = exercise.sets ?: 3
+                        val defaultReps = try { exercise.reps?.split("-")?.first()?.toInt() ?: 12 } catch(e: Exception) { 12 }
+                        repsState[exercise.id] = (1..defaultSets).associateWith { defaultReps }
+                        exerciseLogs[exercise.id] = com.example.sweatzone.data.dto.ExerciseLog(
+                            exercise_title = exercise.title,
+                            sets_completed = defaultSets,
+                            reps_completed = defaultSets * defaultReps,
+                            weight_kg = 0,
+                            time_used_seconds = 0
+                        )
+                    }
                 } else {
                     errorMessage = body?.message ?: "Unknown API error"
                 }
@@ -54,9 +71,6 @@ fun IntermediateArmsWorkoutsScreen(navController: NavController, userViewModel: 
             isLoading = false
         }
     }
-
-
-    val exerciseLogs = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateMapOf<Int, com.example.sweatzone.data.dto.ExerciseLog>() }
 
     Scaffold(
         bottomBar = {
@@ -113,14 +127,36 @@ fun IntermediateArmsWorkoutsScreen(navController: NavController, userViewModel: 
                 }
             } else {
                 items(exercises) { exercise ->
+                    val defaultSets = exercise.sets ?: 3
+                    val defaultReps = try { exercise.reps?.split("-")?.first()?.toInt() ?: 12 } catch(e: Exception) { 12 }
+
+                    val repsMap = repsState[exercise.id] ?: (1..defaultSets).associateWith { defaultReps }
+                    val isLocked = lockedState[exercise.id] ?: false
+
                     ExerciseItem(
                         trackingMode = "intermediate",
                         title = exercise.title,
                         videoUrl = "${com.example.sweatzone.data.api.RetrofitClient.BASE_URL}videos/${exercise.video_filename}",
                         instructions = exercise.instructions,
                         benefits = exercise.benefits,
-                        plannedSets = exercise.sets ?: 3,
-                        plannedReps = try { exercise.reps?.split("-")?.first()?.toInt() ?: 12 } catch(e: Exception) { 12 },
+                        plannedSets = defaultSets,
+                        plannedReps = defaultReps,
+                        currentRepsMap = repsMap,
+                        isLocked = isLocked,
+                        onRepsChanged = { updatedMap ->
+                            repsState[exercise.id] = updatedMap
+                            // Also update immediately so it's always tracked
+                            exerciseLogs[exercise.id] = com.example.sweatzone.data.dto.ExerciseLog(
+                                exercise_title = exercise.title,
+                                sets_completed = defaultSets,
+                                reps_completed = updatedMap.values.sum(),
+                                weight_kg = 0,
+                                time_used_seconds = 0
+                            )
+                        },
+                        onLockChanged = { locked ->
+                            lockedState[exercise.id] = locked
+                        },
                         onDataChanged = { s, r ->
                             exerciseLogs[exercise.id] = com.example.sweatzone.data.dto.ExerciseLog(
                                 exercise_title = exercise.title,

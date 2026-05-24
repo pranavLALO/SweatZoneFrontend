@@ -27,8 +27,7 @@ import com.example.sweatzone.ui.theme.SweatzoneTheme
 import kotlinx.coroutines.launch
 
 @Composable
-fun BeginnerBackWorkoutsScreen(navController: NavController) {
-    val userViewModel: UserViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+fun BeginnerBackWorkoutsScreen(navController: NavController, userViewModel: UserViewModel) {
     val context = LocalContext.current
     val startTime = remember { System.currentTimeMillis() }
     val pinkBg = Color(0xFFFFF0F5)
@@ -124,17 +123,18 @@ fun BeginnerBackWorkoutsScreen(navController: NavController) {
                 Button(
                     onClick = {
                         val duration = ((System.currentTimeMillis() - startTime) / 1000).toInt()
-                        userViewModel.logWorkout(
-                            muscleGroup = "back", 
-                            intensity = "medium",
-                            durationSeconds = duration,
-                            onSuccess = { 
-                                navController.popBackStack() 
-                            },
-                            onError = { errorMsg ->
-                                android.widget.Toast.makeText(context, "Error: $errorMsg", android.widget.Toast.LENGTH_LONG).show()
-                            }
+                        userViewModel.setCurrentWorkoutResult(
+                            WorkoutResult(
+                                muscleGroup = "back",
+                                intensity = "beginner",
+                                totalVolume = 0,
+                                totalReps = 0,
+                                totalSets = 0,
+                                totalTimeSeconds = duration,
+                                exerciseLogs = emptyList()
+                            )
                         )
+                        navController.navigate("workout_summary/back")
                     },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -152,6 +152,9 @@ fun BeginnerBackWorkoutsScreen(navController: NavController) {
 @Composable
 fun BeginnerBackWorkoutsScreenPreview() {
     SweatzoneTheme {
-        BeginnerBackWorkoutsScreen(navController = rememberNavController())
+        BeginnerBackWorkoutsScreen(
+            navController = rememberNavController(),
+            userViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+        )
     }
 }

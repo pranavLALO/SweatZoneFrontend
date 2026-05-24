@@ -24,8 +24,7 @@ import com.example.sweatzone.ui.components.ExerciseItem
 import kotlinx.coroutines.launch
 
 @Composable
-fun BeginnerLegsWorkoutsScreen(navController: NavController) {
-    val userViewModel: UserViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+fun BeginnerLegsWorkoutsScreen(navController: NavController, userViewModel: UserViewModel) {
     val startTime = remember { System.currentTimeMillis() }
     val pinkBg = Color(0xFFFFF0F5)
     val context = LocalContext.current
@@ -121,9 +120,18 @@ fun BeginnerLegsWorkoutsScreen(navController: NavController) {
                 Button(
                     onClick = {
                         val duration = ((System.currentTimeMillis() - startTime) / 1000).toInt()
-                        userViewModel.logWorkout("legs", "medium", duration) {
-                            navController.popBackStack()
-                        }
+                        userViewModel.setCurrentWorkoutResult(
+                            WorkoutResult(
+                                muscleGroup = "legs",
+                                intensity = "beginner",
+                                totalVolume = 0,
+                                totalReps = 0,
+                                totalSets = 0,
+                                totalTimeSeconds = duration,
+                                exerciseLogs = emptyList()
+                            )
+                        )
+                        navController.navigate("workout_summary/legs")
                     },
                     modifier = Modifier
                         .fillMaxWidth()

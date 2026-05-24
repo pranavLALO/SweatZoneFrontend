@@ -29,9 +29,9 @@ fun AdvancedWorkoutTemplate(
     navController: NavController,
     muscleGroup: String,
     headerResId: Int,
-    title: String
+    title: String,
+    userViewModel: UserViewModel
 ) {
-    val userViewModel: UserViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
     val pinkBg = Color(0xFFFFF0F5)
     
     var exercises by remember { mutableStateOf<List<WorkoutExerciseDto>>(emptyList()) }

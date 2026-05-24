@@ -27,8 +27,7 @@ import com.example.sweatzone.ui.theme.SweatzoneTheme
 import kotlinx.coroutines.launch
 
 @Composable
-fun BeginnerAbsWorkoutsScreen(navController: NavController) {
-    val userViewModel: UserViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+fun BeginnerAbsWorkoutsScreen(navController: NavController, userViewModel: UserViewModel) {
     val pinkBg = Color(0xFFFFF0F5)
     val startTime = remember { System.currentTimeMillis() }
     val context = LocalContext.current
@@ -124,9 +123,18 @@ fun BeginnerAbsWorkoutsScreen(navController: NavController) {
                 Button(
                     onClick = {
                         val duration = ((System.currentTimeMillis() - startTime) / 1000).toInt()
-                        userViewModel.logWorkout("abs", "medium", duration) {
-                            navController.popBackStack()
-                        }
+                        userViewModel.setCurrentWorkoutResult(
+                            WorkoutResult(
+                                muscleGroup = "abs",
+                                intensity = "beginner",
+                                totalVolume = 0,
+                                totalReps = 0,
+                                totalSets = 0,
+                                totalTimeSeconds = duration,
+                                exerciseLogs = emptyList()
+                            )
+                        )
+                        navController.navigate("workout_summary/abs")
                     },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -144,6 +152,9 @@ fun BeginnerAbsWorkoutsScreen(navController: NavController) {
 @Composable
 fun BeginnerAbsWorkoutsScreenPreview() {
     SweatzoneTheme {
-        BeginnerAbsWorkoutsScreen(navController = rememberNavController())
+        BeginnerAbsWorkoutsScreen(
+            navController = rememberNavController(),
+            userViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+        )
     }
 }

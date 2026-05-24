@@ -193,6 +193,10 @@ fun ExerciseItem(
     trackingMode: String = "none",
     plannedSets: Int = 3,
     plannedReps: Int = 12,
+    currentRepsMap: Map<Int, Int>? = null,
+    isLocked: Boolean = false,
+    onRepsChanged: ((Map<Int, Int>) -> Unit)? = null,
+    onLockChanged: ((Boolean) -> Unit)? = null,
     onDataChanged: (completedSets: Int, totalReps: Int) -> Unit = { _, _ -> }
 ) {
     Card(
@@ -305,6 +309,10 @@ fun ExerciseItem(
                         IntermediateWorkoutTracker(
                             targetSets = plannedSets,
                             targetReps = plannedReps,
+                            currentRepsMap = currentRepsMap,
+                            isLockedState = isLocked,
+                            onRepsChanged = onRepsChanged,
+                            onLockChanged = onLockChanged,
                             onExerciseSave = { s, r ->
                                 onDataChanged(s, r)
                             }
@@ -593,13 +601,20 @@ fun CountdownTimer(
 fun IntermediateWorkoutTracker(
     targetSets: Int = 3,
     targetReps: Int = 12,
+    currentRepsMap: Map<Int, Int>? = null,
+    isLockedState: Boolean = false,
+    onRepsChanged: ((Map<Int, Int>) -> Unit)? = null,
+    onLockChanged: ((Boolean) -> Unit)? = null,
     onExerciseSave: (completedSets: Int, totalReps: Int) -> Unit
 ) {
     val selectedSet = remember { androidx.compose.runtime.mutableStateOf(1) }
-    val repsMap = remember { androidx.compose.runtime.mutableStateMapOf<Int, Int>().apply { 
+    val localRepsMap = remember { androidx.compose.runtime.mutableStateMapOf<Int, Int>().apply { 
         (1..targetSets).forEach { this[it] = targetReps } 
     } }
-    val isLocked = remember { androidx.compose.runtime.mutableStateOf(false) }
+    val localIsLocked = remember { androidx.compose.runtime.mutableStateOf(false) }
+
+    val repsMap = currentRepsMap ?: localRepsMap
+    val isLocked = onLockChanged?.let { isLockedState } ?: localIsLocked.value
 
     // Consistent Intermediate Colors
     val softLavender = Color(0xFFF3E5F5)
@@ -627,7 +642,7 @@ fun IntermediateWorkoutTracker(
                 
                 val totalRepsDone = repsMap.values.sum()
                 val totalPlanned = targetSets * targetReps
-                val progress = (totalRepsDone.toFloat() / totalPlanned.toFloat()).coerceIn(0f, 1f)
+                val progress = (totalRepsDone.toPercent(targetSets * targetReps))
                 
                 Surface(
                     color = if (progress >= 1f) successGreen else deepPurple,
@@ -681,10 +696,19 @@ fun IntermediateWorkoutTracker(
             ) {
                 IconButton(
                     onClick = { 
-                        val c = repsMap[selectedSet.value] ?: targetReps
-                        if (c > 0) repsMap[selectedSet.value] = c - 1
+                        val currentVal = repsMap[selectedSet.value] ?: targetReps
+                        if (currentVal > 0) {
+                            val newVal = currentVal - 1
+                            if (onRepsChanged != null) {
+                                val updatedMap = repsMap.toMutableMap()
+                                updatedMap[selectedSet.value] = newVal
+                                onRepsChanged(updatedMap)
+                            } else {
+                                localRepsMap[selectedSet.value] = newVal
+                            }
+                        }
                     },
-                    enabled = !isLocked.value,
+                    enabled = !isLocked,
                     modifier = Modifier.background(Color.White, CircleShape)
                 ) {
                     Icon(Icons.Default.Remove, "Less", tint = deepPurple)
@@ -692,7 +716,7 @@ fun IntermediateWorkoutTracker(
                 
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "${repsMap[selectedSet.value]}",
+                        text = "${repsMap[selectedSet.value] ?: targetReps}",
                         color = deepPurple,
                         fontSize = 40.sp,
                         fontWeight = FontWeight.ExtraBold
@@ -707,10 +731,17 @@ fun IntermediateWorkoutTracker(
 
                 IconButton(
                     onClick = { 
-                        val c = repsMap[selectedSet.value] ?: targetReps
-                        repsMap[selectedSet.value] = c + 1
+                        val currentVal = repsMap[selectedSet.value] ?: targetReps
+                        val newVal = currentVal + 1
+                        if (onRepsChanged != null) {
+                            val updatedMap = repsMap.toMutableMap()
+                            updatedMap[selectedSet.value] = newVal
+                            onRepsChanged(updatedMap)
+                        } else {
+                            localRepsMap[selectedSet.value] = newVal
+                        }
                     },
-                    enabled = !isLocked.value,
+                    enabled = !isLocked,
                     modifier = Modifier.background(Color.White, CircleShape)
                 ) {
                     Icon(Icons.Default.Add, "More", tint = deepPurple)
@@ -721,28 +752,38 @@ fun IntermediateWorkoutTracker(
 
             Button(
                 onClick = {
-                    isLocked.value = true
+                    if (onLockChanged != null) {
+                        onLockChanged(true)
+                    } else {
+                        localIsLocked.value = true
+                    }
                     onExerciseSave(targetSets, repsMap.values.sum())
                 },
                 modifier = Modifier.fillMaxWidth().height(50.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (isLocked.value) successGreen else deepPurple
+                    containerColor = if (isLocked) successGreen else deepPurple
                 ),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Icon(
-                    imageVector = if (isLocked.value) Icons.Default.CheckCircle else Icons.Default.Lock,
+                    imageVector = if (isLocked) Icons.Default.CheckCircle else Icons.Default.Lock,
                     contentDescription = null,
                     modifier = Modifier.size(20.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    if (isLocked.value) "PERFORMANCE SAVED" else "LOCK SET DATA",
+                    if (isLocked) "PERFORMANCE SAVED" else "LOCK SET DATA",
                     fontWeight = FontWeight.Bold
                 )
             }
         }
     }
+}
+
+// Extension function to help safe percent conversion
+private fun Int.toPercent(planned: Int): Float {
+    if (planned <= 0) return 0f
+    return (this.toFloat() / planned.toFloat()).coerceIn(0f, 1f)
 }
 
 @Composable

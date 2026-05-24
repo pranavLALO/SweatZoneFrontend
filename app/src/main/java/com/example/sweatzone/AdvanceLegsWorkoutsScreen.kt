@@ -5,11 +5,12 @@ import androidx.navigation.NavController
 import com.example.sweatzone.ui.components.AdvancedWorkoutTemplate
 
 @Composable
-fun AdvanceLegsWorkoutsScreen(navController: NavController) {
+fun AdvanceLegsWorkoutsScreen(navController: NavController, userViewModel: UserViewModel) {
     AdvancedWorkoutTemplate(
         navController = navController,
         muscleGroup = "legs",
         headerResId = R.drawable.legimg,
-        title = "Legs"
+        title = "Legs",
+        userViewModel = userViewModel
     )
 }

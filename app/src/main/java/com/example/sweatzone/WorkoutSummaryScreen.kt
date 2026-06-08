@@ -18,23 +18,34 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.sweatzone.data.dto.LastWorkoutData
+import androidx.compose.animation.core.*
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.foundation.shape.CircleShape
 
 @Composable
 fun WorkoutSummaryScreen(navController: NavController, muscleGroup: String, userViewModel: UserViewModel) {
     val currentResult by userViewModel.currentWorkoutResult.collectAsState()
     val lastWorkoutState by userViewModel.lastWorkout.collectAsState()
+    val workoutHistory by userViewModel.workoutHistory.collectAsState()
 
     LaunchedEffect(Unit) {
         userViewModel.fetchLastWorkout(muscleGroup)
+        userViewModel.fetchWorkoutHistory()
     }
+
+    var showSuccessOverlay by remember { mutableStateOf(true) }
+    val workoutNumber = (workoutHistory?.size ?: 0) + 1
+    val workoutCountText = workoutNumber.toOrdinal()
 
     val premiumDark = Color(0xFF1A1A1A)
     val premiumAccent = Color(0xFFE0FF63)
     val cardBg = Color(0xFF2C2C2C)
 
-    Scaffold(
-        containerColor = premiumDark
-    ) { padding ->
+    Box(modifier = Modifier.fillMaxSize()) {
+        Scaffold(
+            containerColor = premiumDark
+        ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -245,6 +256,17 @@ fun WorkoutSummaryScreen(navController: NavController, muscleGroup: String, user
             }
         }
     }
+
+    // Overlay dialog
+    if (showSuccessOverlay) {
+        SuccessOverlay(
+            workoutCountText = workoutCountText,
+            onDismiss = {
+                showSuccessOverlay = false
+            }
+        )
+    }
+}
 }
 
 @Composable
@@ -313,4 +335,209 @@ fun formatDuration(seconds: Int): String {
     val m = seconds / 60
     val s = seconds % 60
     return String.format("%02d:%02d", m, s)
+}
+
+fun Int.toOrdinal(): String {
+    if (this % 100 in 11..13) {
+        return "${this}th"
+    }
+    return when (this % 10) {
+        1 -> "${this}st"
+        2 -> "${this}nd"
+        3 -> "${this}rd"
+        else -> "${this}th"
+    }
+}
+
+@Composable
+fun SuccessOverlay(
+    workoutCountText: String,
+    onDismiss: () -> Unit
+) {
+    var animateTrigger by remember { mutableStateOf(false) }
+    
+    // Trigger animation start
+    LaunchedEffect(Unit) {
+        animateTrigger = true
+    }
+
+    // Scale & Alpha animations for the card
+    val scale by animateFloatAsState(
+        targetValue = if (animateTrigger) 1f else 0.7f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow
+        ),
+        label = "scale"
+    )
+    val alpha by animateFloatAsState(
+        targetValue = if (animateTrigger) 1f else 0f,
+        animationSpec = tween(durationMillis = 300),
+        label = "alpha"
+    )
+
+    // Infinite transitions for pulsing & rotating the trophy/badge
+    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
+    val rotation by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(8000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "rotation"
+    )
+    val badgeScale by infiniteTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = 1.15f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1200, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "badgeScale"
+    )
+
+    // Full screen overlay box
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.85f))
+            .clickable(enabled = false) {}, // Intercept clicks
+        contentAlignment = Alignment.Center
+    ) {
+        // Premium Success Card
+        Card(
+            modifier = Modifier
+                .width(320.dp)
+                .graphicsLayer(
+                    scaleX = scale,
+                    scaleY = scale,
+                    alpha = alpha
+                )
+                .border(
+                    width = 1.dp,
+                    brush = Brush.linearGradient(
+                        colors = listOf(Color(0xFFE0FF63), Color.Transparent, Color.Cyan)
+                    ),
+                    shape = RoundedCornerShape(28.dp)
+                ),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF242424)),
+            shape = RoundedCornerShape(28.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 16.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                // Trophy/Badge Icon with glowing background and rotation/pulse
+                Box(
+                    modifier = Modifier
+                        .size(120.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    // Pulsing glow background
+                    Box(
+                        modifier = Modifier
+                            .size(100.dp)
+                            .graphicsLayer(scaleX = badgeScale, scaleY = badgeScale)
+                            .clip(CircleShape)
+                            .background(
+                                Brush.radialGradient(
+                                    colors = listOf(
+                                        Color(0xFFE0FF63).copy(alpha = 0.3f),
+                                        Color.Transparent
+                                    )
+                                )
+                            )
+                    )
+                    
+                    // Rotating star outline decoration
+                    Icon(
+                        imageVector = Icons.Default.BrightnessHigh, // Sunburst/Star pattern
+                        contentDescription = null,
+                        tint = Color(0xFFE0FF63).copy(alpha = 0.2f),
+                        modifier = Modifier
+                            .size(110.dp)
+                            .graphicsLayer(rotationZ = rotation)
+                    )
+                    
+                    // Golden Trophy/Star in the center
+                    Box(
+                        modifier = Modifier
+                            .size(72.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFFE0FF63))
+                            .graphicsLayer(scaleX = badgeScale, scaleY = badgeScale),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.EmojiEvents, // Trophy Icon
+                            contentDescription = "Success",
+                            tint = Color.Black,
+                            modifier = Modifier.size(36.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Celebration Header
+                Text(
+                    text = "WORKOUT COMPLETED!",
+                    color = Color(0xFFE0FF63),
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    textAlign = TextAlign.Center,
+                    letterSpacing = 1.sp
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Dynamic Milestone text
+                Text(
+                    text = "You completed your\n$workoutCountText workout! 🎉",
+                    color = Color.White,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    lineHeight = 24.sp
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Motivational Text
+                Text(
+                    text = "Awesome job! Keep working out to reach your fitness goals.",
+                    color = Color.LightGray,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                    textAlign = TextAlign.Center,
+                    lineHeight = 18.sp
+                )
+
+                Spacer(modifier = Modifier.height(28.dp))
+
+                // Return to Home button
+                Button(
+                    onClick = onDismiss,
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE0FF63)),
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp)
+                ) {
+                    Text(
+                        text = "SEE PERFORMANCE REPORT",
+                        color = Color.Black,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 13.sp,
+                        letterSpacing = 0.5.sp
+                    )
+                }
+            }
+        }
+    }
 }

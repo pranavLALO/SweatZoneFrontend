@@ -6,7 +6,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 object RetrofitClient {
 
     // Using Local Wi-Fi IP address (use "http://10.0.2.2/SweatZone/" for Android Emulator)
-    const val BASE_URL = "http://192.168.150.119/SweatZone/"
+    const val BASE_URL = "http://10.131.183.119/SweatZone/"
 
     val api: ApiService by lazy {
         val client = okhttp3.OkHttpClient.Builder()
